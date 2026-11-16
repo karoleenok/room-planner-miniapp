@@ -234,13 +234,16 @@ const BUILD = {
       for (let i = 0; i < pa.count; i++) pa.setZ(i, Math.sin(pa.getX(i) * (bo ? 18 : 32)) * (bo ? .05 : .035)); geo.computeVertexNormals();
       const c = mesh(geo, M(v, bo ? .99 : .95, 0, { side: THREE.DoubleSide }), s * (w / 2 - pw / 2), ph / 2 + .03, .12); g.add(c); }
     return g; },
-  vine(p, v, room) { const g = new THREE.Group(); const w = p.w; const H = room ? room.H : 2.7; const top = Math.min(H - .12, 2.95);
-    g.add(mesh(BX(w, .05, .14), M(p.pot || "#C9B49F", .8), 0, top, .08));
+  vine(p, v, room, it) { const g = new THREE.Group(); const w = (it && it.w) || p.w; const H = room ? room.H : 2.7; const top = Math.min(H - .12, 2.95);
+    /* длина плетей задаётся ползунком; доски сверху нет — лианы просто свисают */
+    const L = Math.max(.25, Math.min((it && it.h) || p.h || 1.1, top - .05));
+    const n = Math.max(5, Math.round(w / .13));
     const r = rnd(p.seed || 7); const lf = M(v, .72), lf2 = M(shadeHex(v, .82), .72);
-    for (let i = 0; i < 7; i++) { const x = -w / 2 + w * (i + .5) / 7, len = .5 + r() * (top - .9);
+    for (let i = 0; i < n; i++) { const x = -w / 2 + w * (i + .5) / n, len = L * (.68 + r() * .32);
       const pts = []; for (let k = 0; k <= 8; k++) { const tt = k / 8; pts.push(new THREE.Vector3(x + Math.sin(tt * 3 + i) * .05, top - .04 - len * tt, .08 + Math.sin(tt * 2) * .03)); }
       const cur = new THREE.CatmullRomCurve3(pts); g.add(mesh(new THREE.TubeGeometry(cur, 20, .006, 5), lf2));
-      for (let k = 1; k <= 7; k++) { const pt = cur.getPoint(k / 7.5); const l = mesh(new THREE.SphereGeometry(.045, 10, 8), k % 2 ? lf : lf2, pt.x + (r() - .5) * .05, pt.y, pt.z + .02);
+      const lc = Math.max(4, Math.min(14, Math.round(len / .16)));
+      for (let k = 1; k <= lc; k++) { const pt = cur.getPoint(k / (lc + .5)); const l = mesh(new THREE.SphereGeometry(.045, 10, 8), k % 2 ? lf : lf2, pt.x + (r() - .5) * .05, pt.y, pt.z + .02);
         l.scale.set(1, .35, .8); l.rotation.set(r() - .5, r() * 3, r() - .5); l.castShadow = false; g.add(l); } }
     return g; },
   tv(p, v, room) { const g = new THREE.Group(); const w = p.w, h = w * .58; const y = p.ony ? h / 2 + .06 : 1.25;
@@ -309,7 +312,7 @@ const CATALOG = [
   P("rug", "Ковёр 200×140", "Текстиль", "rug", "ym", 8990, 2.0, 1.4, [["#C9B49F", "Беж"], ["#8E9AAF", "Серо-голубой"], ["#7E5A4A", "Кирпич"]], { flat: 1, rsz: [1.2, 3.4], rszD: [.8, 2.4] }),
   P("curtain", "Шторы лён 2 шт.", "Текстиль", "curtain", "wb", 4290, 1.8, .2, [["#EDE6DA", "Лён"], ["#C9D3C0", "Шалфей"], ["#E7C8B8", "Пудра"]], { wall: 1 }),
   P("curtain-bo", "Шторы блэкаут 2 шт.", "Текстиль", "curtain", "oz", 5990, 1.8, .22, [["#3E4A55", "Графит"], ["#5F6B5A", "Олива"], ["#7E5A4A", "Какао"], ["#2B2D33", "Чёрный"]], { wall: 1, blackout: 1 }),
-  P("vine", "Лиана ампельная", "Декор", "vine", "wb", 2490, .9, .18, [["#4E7D4A", "Зелёная"], ["#6E9A6B", "Светлая"]], { wall: 1, seed: 7 }),
+  P("vine", "Лиана ампельная", "Декор", "vine", "wb", 2490, .9, .18, [["#4E7D4A", "Зелёная"], ["#6E9A6B", "Светлая"]], { wall: 1, seed: 7, h: 1.6, rsz: [.3, 1.8], hr: [.4, 2.4] }),
   P("tv", "Телевизор 55\u2033", "Декор", "tv", "oz", 39990, 1.24, .08, [["#1B2430", "Экран"]], { wall: 1 }),
   P("monitor", "Монитор 27\u2033", "Декор", "monitor", "ym", 18990, .62, .2, [["#16202B", "Экран"]], { small: 1 })
 ];
@@ -472,6 +475,19 @@ function adaptAll(r) { for (const it of r.items) adaptWall(r, it); }
 /* ================= цвета, материалы, проёмы ================= */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const r05 = v => Math.round(v * 20) / 20;
+/* предел размера: предмет может дорасти до противоположной стены; дальше не пускает физика (findNear) */
+function spanXZ(r) { const xs = r.pts.map(p => p[0]), zs = r.pts.map(p => p[1]); return [Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs)]; }
+function roomMax(r, p, it) { if (!r) return 4;
+  const [sx, sz] = spanXZ(r);
+  if (p.wall || p.ceil) { const E = edges(r), e = it && it.wallIdx !== undefined ? E[it.wallIdx] : null; return e ? e.len : Math.max(sx, sz); }
+  return Math.max(sx, sz); }
+/* [мин, макс] ширины или глубины: минимум из каталога, максимум — стена */
+function szLim(r, p, it, key) { const b = key === "d" ? p.rszD : p.rsz; if (!b) return null;
+  return [b[0], Math.max(b[0] + .05, r05(roomMax(r, p, it) - .02), b[1])]; }
+/* [мин, макс] высоты или длины: максимум — от пола до потолка */
+function hLim(r, p) { const b = p.hr || p.rszH; if (!b) return null; const H = r ? r.H : 2.7;
+  return [b[0], Math.max(b[0] + .05, r05(H - .15), b[1])]; }
+const itH = (it, p) => it.h || p.h || 1;
 const PAL = [["#F2EFE9", "Белый"], ["#E9E4DA", "Молочный"], ["#D8C3B0", "Беж"], ["#C9B49F", "Песок"], ["#C49A6C", "Дуб"], ["#8A5F3E", "Орех"], ["#C9A99A", "Капучино"], ["#C9785A", "Терракота"], ["#7E5A4A", "Кирпич"], ["#E7C8B8", "Пудра"], ["#D8A9A0", "Розовый"], ["#7A2E3A", "Бордо"], ["#D8B26E", "Горчичный"], ["#C9D3C0", "Мята"], ["#7E9C8A", "Шалфей"], ["#5F6B5A", "Оливковый"], ["#9FB3C8", "Голубой"], ["#8E9AAF", "Серо-голубой"], ["#3E5A6B", "Синий"], ["#B7A9C9", "Лаванда"], ["#3E4A55", "Графит"], ["#2B2D33", "Чёрный"]];
 const MATS = [["none", "Гладкий"], ["linen", "Лён"], ["boucle", "Букле"], ["velvet", "Велюр"], ["wood", "Дерево"], ["marble", "Мрамор"], ["concrete", "Бетон"]];
 const PHOTOS = {}; let photoN = 0;
@@ -1074,7 +1090,7 @@ function vStep3() { const r = S.room; const E = edges(r); const curWall = S.pain
 const dimTxt = (it, p) => { const w = it.w || p.w, d = it.d || p.d; return p.round || p.b === "coffee" ? "Ø" + Math.round(w * 100) + " см" : Math.round(w * 100) + "×" + Math.round(d * 100) + " см" + (p.hr ? ", выс. " + Math.round((it.h || p.h) * 100) : ""); };
 function edTabs(it) { const p = PROD[it.p]; const t = []; if (p.rsz) t.push(["size", "Размер"]); if (p.b === "art") t.push(["poster", "Постер"]); t.push(["color", "Цвет"], ["mat", "Материал"]); return t; }
 const edTab = it => { const t = edTabs(it); return t.some(x => x[0] === S.etab) ? S.etab : t[0][0]; };
-const vEdH = it => { const p = PROD[it.p], t = edTab(it); return t === "size" ? 182 + 62 * (1 + (p.rszD ? 1 : 0) + (p.hr ? 1 : 0)) : t === "poster" ? 290 : 262; };
+const vEdH = it => { const p = PROD[it.p], t = edTab(it); return t === "size" ? 182 + 62 * (1 + (p.rszD ? 1 : 0) + (p.hr || p.rszH ? 1 : 0)) : t === "poster" ? 290 : 262; };
 function vEditor(it) { const p = PROD[it.p]; const base = itemBase(it); const photo = isPh(it.mat) && PHOTOS[it.mat]; const curCol = it.col ? it.col.toLowerCase() : null;
   const dot = c => `radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 45%),${c}`;
   const sv = p.vars.map((v, i) => `<button class="sw ${!curCol && !photo && (it.v || 0) === i ? "on" : ""}" aria-pressed="${!curCol && !photo && (it.v || 0) === i}" data-var="${i}"><i style="background:${dot(v[0])}"></i><span>${v[1]}</span></button>`).join("");
@@ -1085,11 +1101,12 @@ function vEditor(it) { const p = PROD[it.p]; const base = itemBase(it); const ph
   const ph = `<label class="sw ${photo ? "on" : ""}" aria-label="Загрузить фото ткани или материала"><i style="${photo ? `background:url(${photo.url}) center/cover` : "background:#F1F2F5;display:flex;align-items:center;justify-content:center"}">${photo ? "" : ic("image", 22, "#2B2D33", 1.8)}</i><input type="file" accept="image/*" data-photo><span>Своё фото</span></label>`;
   const rr = (key, label, lim, cur) => `<div class="rng"><div class="rh"><span>${label}</span><output data-r${key}out>${fmt(cur)} м</output></div><input type="range" data-r${key} min="${lim[0]}" max="${lim[1]}" step=".05" value="${cur}" style="--p:${pct(cur, lim[0], lim[1])}%" aria-label="${label}, метры"></div>`;
   const cw = it.w || p.w, cd = it.d || p.d;
+  const rmm = S.room, Lw = szLim(rmm, p, it, "w"), Ld = szLim(rmm, p, it, "d"), Lh = hLim(rmm, p);
   const chips = p.sizes ? p.sizes.map((z, i) => `<button class="chip ${Math.abs(cw - z.w) < .03 && Math.abs(cd - z.d) < .03 ? "on" : ""}" data-rsz="${i}" style="height:34px;font-size:14px">${z.l}</button>`).join("")
-    : p.rsz ? [["S", p.rsz[0]], ["M", Math.round((p.rsz[0] + p.rsz[1]) / 2 * 20) / 20], ["L", p.rsz[1]]].map(([l, v]) => `<button class="chip ${Math.abs(cw - v) < .03 ? "on" : ""}" data-rpre="${v}" style="height:34px;font-size:14px">${l} · ${fmt(v)} м</button>`).join("") : "";
+    : p.rsz ? [["S", p.rsz[0]], ["M", Math.round((p.rsz[0] + p.rsz[1]) / 2 * 20) / 20], ["L", p.rsz[1]], ["Макс", Lw[1]]].filter((x, i, a) => a.findIndex(y => Math.abs(y[1] - x[1]) < .03) === i).map(([l, v]) => `<button class="chip ${Math.abs(cw - v) < .03 ? "on" : ""}" data-rpre="${v}" style="height:34px;font-size:14px">${l} · ${fmt(v)} м</button>`).join("") : "";
   const tb = edTab(it);
   let body = "";
-  if (tb === "size") body = `<div class="scrollx" style="padding-top:4px;padding-bottom:10px">${chips}</div>${rr("w", p.round || p.b === "coffee" ? "Диаметр" : "Ширина", p.rsz, cw)}${p.rszD ? rr("d", "Глубина", p.rszD, cd) : ""}${p.hr ? rr("h", "Высота", p.hr, it.h || p.h) : ""}`;
+  if (tb === "size") body = `<div class="scrollx" style="padding-top:4px;padding-bottom:10px">${chips}</div>${rr("w", p.round || p.b === "coffee" ? "Диаметр" : "Ширина", Lw, clamp(cw, Lw[0], Lw[1]))}${Ld ? rr("d", "Глубина", Ld, clamp(cd, Ld[0], Ld[1])) : ""}${Lh ? rr("h", p.b === "vine" ? "Длина" : "Высота", Lh, clamp(itH(it, p), Lh[0], Lh[1])) : ""}`;
   else if (tb === "poster") body = `<div class="scrollx" style="padding-top:4px"><label class="sw ${it.img ? "on" : ""}" aria-label="Загрузить своё изображение"><i style="${it.img && PHOTOS[it.img] ? `background:url(${PHOTOS[it.img].url}) center/cover` : "background:#F1F2F4;display:flex;align-items:center;justify-content:center"}">${it.img ? "" : ic("image", 22, "#2B2D33", 1.8)}</i><input type="file" accept="image/*" data-poster><span>Загрузить</span></label>
     ${it.img ? `<button class="sw" data-act="posteroff"><i style="background:#F1F2F4;display:flex;align-items:center;justify-content:center">${ic("undo", 20, "#2B2D33", 2)}</i><span>Вернуть</span></button>` : ""}</div><p class="t13">Картинка встаёт в раму, пропорции подгоняются.</p>`;
   else if (tb === "color") body = `<div class="scrollx" role="group" aria-label="Цвет" style="padding-top:4px">${sv}${cust}${sp}</div>${p.store === "base" ? "" : `<p class="t13" style="margin-top:2px">Свой цвет нужен для примерки. В магазине выбери ближайший.</p>`}`;
@@ -1130,8 +1147,11 @@ function vMake() {
     : `<div class="mkgrid">${ARCH.map(x => `<button class="chip ${m.ar === x.k ? "on" : ""}" data-mkar="${x.k}" style="height:38px;font-size:13px;justify-content:center;padding:0 8px">${x.n}</button>`).join("")}</div>`;
   let rest = `<p class="t13" style="margin-top:12px">Фото ляжет на нашу модель выбранного типа. Чем ровнее фон, тем лучше получится силуэт.</p>`;
   if (a && ph) {
-    const lw = a.ex.rsz || [r05(Math.max(.1, a.w * .4)), r05(a.w * 2.2)], ld = a.ex.rszD || [r05(Math.max(.1, a.d * .4)), r05(a.d * 2.2)];
-    const lh = [r05(Math.max(.1, a.h * .4)), r05(a.h * 1.8)];
+    /* верх ползунков — по комнате: вещь можно растянуть до противоположной стены и до потолка */
+    const rm = S.room; const [spx, spz] = rm ? spanXZ(rm) : [4, 4]; const wallMax = r05(Math.max(spx, spz) - .02), ceilMax = r05((rm ? rm.H : 2.7) - .15);
+    const lw0 = a.ex.rsz || [r05(Math.max(.1, a.w * .4)), r05(a.w * 2.2)], ld0 = a.ex.rszD || [r05(Math.max(.1, a.d * .4)), r05(a.d * 2.2)];
+    const lw = [lw0[0], Math.max(lw0[1], wallMax)], ld = [ld0[0], Math.max(ld0[1], wallMax)];
+    const lh = [r05(Math.max(.1, a.h * .4)), Math.max(r05(a.h * 1.8), ceilMax)];
     const pm = primMode(a), stand = !a.ex.wall && !a.ex.flat && !a.ex.ceil, cm = m.mode === "cut" && C;
     let szRow;
     if (cm && stand) szRow = rr("h", "Высота", lh, m.h) + `<p class="t13">Ширина и глубина — <b data-mkderived>${fmt(r05(m.h / C.ar))}</b> м, из пропорций фото.</p>`;
@@ -1360,9 +1380,10 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
     case "makeadd": { const m = S.make; if (!m || !m.img || !m.ar) return;
       const a = ARC[m.ar]; const o = { id: "my" + nid(), n: (m.n || "").trim() || a.n, ar: m.ar, w: m.w, d: m.d, h: m.h, mode: m.mode, price: m.price || 0, img: m.img };
       const p = addMine(o); S.make = null; S.lib = "Моё";
-      const nit = place(p.id); if (nit.noWin) { toast("Добавили в библиотеку"); render(); return; }
-      r.items.push(nit); S.sel = nit.id; rebuild(false); if (p.wall) focusWall(nit.wallIdx);
-      toast("«" + p.n + "» в комнате и в твоей библиотеке"); return; }
+      const nit = place(p.id); if (nit.noWin) { render(); toast("«" + p.n + "» в библиотеке, раздел «Моё»"); return; }
+      r.items.push(nit); S.sel = nit.id; S.edit = true; S.collapsed = false; S.full = false;
+      rebuild(false); if (p.wall) focusWall(nit.wallIdx); else focusItem(r, nit);
+      render(); toast("«" + p.n + "» в комнате — размер и цвет ниже"); return; }
     case "insideclose": { if (S.open) { const o = r.items.find(i => i.id === S.open); if (o) o.open = false; } S.open = null; S.openSill = null; rebuild(false); frame(r, { az: curAz() }); render(); return; }
     case "cam-top": { const top = controls.getPolarAngle() < .3; camAnim.on = false; frame(r, top ? { az: curAz() } : { top: 1, az: curAz() }); S.wmenu = false; render(); return; }
     case "walls": S.wmenu = !S.wmenu; render(); return;
@@ -1438,7 +1459,7 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
     it.w = z.w; it.d = z.d; if (z.h) it.h = z.h; if (isFloor(p) && !findNear(r, it)) { it.w = o.w; it.d = o.d; it.h = o.h; toast("Больше не помещается"); } else clampRiders(r, it);
     rebuild(false); render(); return; }
   if (d.rpre !== undefined) { const it = r.items.find(i => i.id === S.sel); if (!it) return; const p = PROD[it.p]; const old = it.w;
-    it.w = +d.rpre; if (isFloor(p) && !findNear(r, it)) { it.w = old; toast("Больше не помещается"); } else clampRiders(r, it);
+    it.w = +d.rpre; if (isFloor(p) && !findNear(r, it)) { it.w = old; toast("Дальше мешает стена или соседний предмет"); } else clampRiders(r, it);
     rebuild(false); render(); return; }
   if (d.plan2 !== undefined) { const pr = PRESETS[+d.plan2].room; r.L = pr.L; r.W = pr.W; r.shape = "rect"; r.pts = rectPts(pr.L, pr.W);
     r.openings = pr.openings.map(o => Object.assign({ id: nid() }, o)); r.items = r.items.filter(i => inside(r.pts, i.x, i.z)); S.plans = false;
@@ -1466,11 +1487,13 @@ document.addEventListener("input", e => { const t = e.target;
     if (t.dataset.mkprice !== undefined) { m.price = Math.max(0, Math.min(9999999, parseInt(t.value.replace(/\D/g, ""), 10) || 0)); return; } }
   if (t.dataset.opf) { const r = S.room, o = r && r.openings.find(x => x.id === S.selOpen); if (!o) return; setOp(r, o, t.dataset.opf, +t.value); syncOpUI(o); scheduleRoom(); return; }
   if (t.dataset.rw !== undefined || t.dataset.rd !== undefined || t.dataset.rh !== undefined) { const r = S.room; const it = r.items.find(i => i.id === S.sel); if (!it) return;
-    const key = t.dataset.rw !== undefined ? "w" : t.dataset.rd !== undefined ? "d" : "h"; const p = PROD[it.p]; const lim = key === "w" ? p.rsz : key === "d" ? p.rszD : p.hr; const old = it[key];
-    it[key] = Math.round(+t.value * 20) / 20;
-    if (isFloor(p) && !findNear(r, it)) { it[key] = old; t.value = old || p[key]; toast("Больше не помещается"); }
-    t.style.setProperty("--p", pct(it[key] || p[key], lim[0], lim[1]) + "%");
-    const out = document.querySelector("[data-r" + key + "out]"); if (out) out.textContent = fmt(it[key] || p[key]) + " м";
+    const key = t.dataset.rw !== undefined ? "w" : t.dataset.rd !== undefined ? "d" : "h"; const p = PROD[it.p]; const lim = key === "h" ? hLim(r, p) : szLim(r, p, it, key); if (!lim) return; const old = it[key];
+    it[key] = clamp(r05(+t.value), lim[0], lim[1]);
+    if (key !== "h" && isFloor(p) && !findNear(r, it)) { it[key] = old; t.value = old || p[key]; toast("Дальше мешает стена или соседний предмет"); }
+    const cur = key === "h" ? itH(it, p) : (it[key] || p[key]);
+    t.style.setProperty("--p", pct(cur, lim[0], lim[1]) + "%");
+    const out = document.querySelector("[data-r" + key + "out]"); if (out) out.textContent = fmt(cur) + " м";
+    if (p.wall) adaptWall(r, it);
     clampRiders(r, it); scheduleItems(); return; }
   if (t.dataset.cust !== undefined) { const it = S.room.items.find(i => i.id === S.sel); if (!it) return; it.col = t.value; if (isPh(it.mat)) it.mat = null; scheduleItems(); return; }
   const k = t.dataset.dim; if (!k) return; const v = parseFloat(t.value.replace(",", ".")); if (!(v > 0)) return; const lim = k === "H" ? [2.2, 4] : [1.5, 10]; const r = S.room; r[k] = Math.max(lim[0], Math.min(lim[1], v));
