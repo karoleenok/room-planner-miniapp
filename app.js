@@ -21,7 +21,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = n => (Math.round(n * 100) / 100).toString().replace(".", ",");
 const rub = n => n.toLocaleString("ru-RU") + " ₽";
-let uidN = 1; const nid = () => "i" + (uidN++);
+let uidN = 1; const nid = () => "i" + (uidN++) + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 5);
 function rnd(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 
 /* ================= материалы и текстуры ================= */
@@ -567,6 +567,38 @@ function saveMine() {
   try { localStorage.setItem(MYKEY, JSON.stringify(MY.map(o => ({ ...o, u: (PHOTOS[o.img] || {}).url })))); }
   catch (_) { toast("Не хватило места в памяти браузера. Удали что-нибудь из своих вещей"); }
 }
+const ROOMKEY = "room.rooms.v1"; let saveT = 0;
+function roomPack(withSnap) {
+  return S.rooms.map(r => { const ph = {};
+    const items = r.items.map(it => { const c = JSON.parse(JSON.stringify(it)); const p = PROD[it.p];
+      for (const k of ["img", "mat"]) { const v = c[k]; if (!isPh(v)) continue;
+        if (k === "img" && p && p.mine && v === p.img) { delete c.img; continue; }
+        if (PHOTOS[v] && PHOTOS[v].url) ph[v] = PHOTOS[v].url; else delete c[k]; }
+      return c; });
+    const o = { ...r, items, ph }; if (!withSnap) o.snap = null; delete o.sel; return o; });
+}
+function saveRooms() {
+  try { if (!S.rooms.length) { localStorage.removeItem(ROOMKEY); return; }
+    try { localStorage.setItem(ROOMKEY, JSON.stringify(roomPack(true))); }
+    catch (_) { localStorage.setItem(ROOMKEY, JSON.stringify(roomPack(false))); } }
+  catch (_) { toast("Не хватило места в памяти браузера, комнаты не сохранились"); }
+}
+function queueSave() { clearTimeout(saveT); saveT = setTimeout(saveRooms, 500); }
+function flushSave() { if (saveT) { try { if (S.room && S.screen !== "home" && !S.walk) snap(); } catch (_) {} clearTimeout(saveT); saveT = 0; saveRooms(); } }
+addEventListener("pagehide", flushSave); document.addEventListener("visibilitychange", () => { if (document.hidden) flushSave(); });
+async function loadRooms() {
+  let arr; try { arr = JSON.parse(localStorage.getItem(ROOMKEY) || "[]"); } catch (_) { return; }
+  if (!Array.isArray(arr)) return;
+  for (const o of arr.slice(0, 30)) {
+    if (!o || !Array.isArray(o.pts) || o.pts.length < 3 || !Array.isArray(o.items) || !Array.isArray(o.openings)) continue;
+    const map = {}; const ph = o.ph && typeof o.ph === "object" ? o.ph : {};
+    for (const k of Object.keys(ph)) { if (typeof ph[k] === "string" && ph[k].startsWith("data:image/")) { const id = await restorePhoto(ph[k]); if (id) map[k] = id; } }
+    o.items = o.items.filter(it => it && PROD[it.p]);
+    for (const it of o.items) { const p = PROD[it.p];
+      for (const k of ["img", "mat"]) if (isPh(it[k])) { if (map[it[k]]) it[k] = map[it[k]]; else it[k] = null; }
+      if (p.mine && p.ar === "art" && !it.img) it.img = p.img; }
+    delete o.ph; S.rooms.push(newRoom(o)); }
+}
 function restorePhoto(url) {
   return new Promise(res => { const im = new Image();
     im.onload = () => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const g = c.getContext("2d"); g.drawImage(im, 0, 0);
@@ -826,8 +858,9 @@ const I = { x: '<path d="M6 6l12 12M18 6L6 18"/>', back: '<path d="M15 5l-7 7 7 
 const ic = (n, sz = 20, col = "currentColor", sw = 2, vb = 24) => `<svg width="${sz}" height="${sz}" viewBox="0 0 ${vb} ${vb}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 const storeTag = s => `<span class="store st-${["ym", "wb", "my"].includes(s) ? s : "oz"}">${ST[s] || ST.oz}</span>`;
 
+const STEPT = ["", "Размеры", "Окна и двери", "Отделка", "Мебель", "Итог"];
 function header(step) { let b = ""; for (let i = 1; i <= 5; i++) b += `<span class="${i < step ? "d" : i === step ? "c" : ""}"></span>`;
-  return `<div class="top"><button class="icb glass" data-act="back" aria-label="Назад">${ic(step === 1 ? "x" : "back", 20, "#111114", 2.2)}</button><div class="prog glass"><span>Шаг ${step} из 5</span><div class="bars" aria-hidden="true">${b}</div></div><span style="width:44px"></span></div>`; }
+  return `<div class="top"><button class="icb glass" data-act="back" aria-label="Назад">${ic(step === 1 ? "x" : "back", 20, "#111114", 2.2)}</button><div class="prog glass" role="group" aria-label="Шаг ${step} из 5"><span>${STEPT[step]}</span><div class="bars" aria-hidden="true">${b}</div></div><span style="width:44px"></span></div>`; }
 const WMODES = [["auto", "Срез", "ближние стены убираются"], ["ghost", "Прозрачные", "ближние стены просвечивают"], ["up", "Все стены", "как есть, удобно сверху"], ["down", "Низкие", "стены вровень с полом"]];
 function wmenu() { return `<div class="wmenu glass" role="menu" aria-label="Режим стен">${WMODES.map(([k, l, s]) => `<button role="menuitemradio" aria-checked="${S.wallMode === k}" class="${S.wallMode === k ? "on" : ""}" data-wmode="${k}"><b>${l}</b><span>${s}</span></button>`).join("")}</div>`; }
 function tools(opts = {}) { const n = S.room && S.room.night; const top = controls.getPolarAngle() < .3; return `<div class="tools glass" role="toolbar" aria-label="Вид">
@@ -838,7 +871,6 @@ function tools(opts = {}) { const n = S.room && S.room.night; const top = contro
   <button data-act="walk" aria-label="Прогуляться по комнате">${ic("walk", 20, "currentColor", 1.8)}</button><hr>
   <button data-act="night" aria-label="${n ? "Включить день" : "Включить вечер"}">${ic(n ? "sun" : "moon", 20, "currentColor", 1.8)}</button><hr>
   <button class="${S.full ? "on" : ""}" aria-pressed="${!!S.full}" data-act="full" aria-label="${S.full ? "Показать панель" : "Комната на весь экран"}">${ic(S.full ? "shrink" : "expand", 20, "currentColor", 1.8)}</button></div>${S.wmenu ? wmenu() : ""}`; }
-const ptitle = s => `<div class="ptitle"><span>${s}</span></div>`;
 function sheet(h, inner, cta, pb = 104) {
   if (S.full) { setOffset(0); return `<div class="bottom" style="justify-content:center"><button class="chip dark" data-act="full" style="height:46px;padding:0 20px;gap:8px">${ic("shrink", 16, "#FFFFFF", 2)}Показать панель</button></div>`; }
   /* выше 520 панель залезает под столбик инструментов справа и прячет кнопки в её шапке */
@@ -934,7 +966,7 @@ function vStep1() { const r = S.room;
   if (S.draw) return vDraw();
   const shapes = [["rect", "Прямая", '<rect x="3" y="4" width="22" height="18" rx="2"/>'], ["L", "Г-образная", '<path d="M3 4h22v10h-9v8H3z"/>'], ["custom", "Своя", '<path d="M3 8l8-5 13 4-2 15-14 1z"/>']];
   const plans = S.plans ? `<div class="scrollx" role="group" aria-label="Готовые планировки">${PRESETS.map((p, i) => `<button class="coll" data-plan2="${i}" style="width:190px"><img src="${S.snaps["p" + i] || ""}" alt="" style="height:96px"><div style="padding:8px 12px 12px"><div class="t15">${p.room.name}</div><div class="t13">${fmt(p.room.L)} × ${fmt(p.room.W)} м</div></div></button>`).join("")}</div>` : "";
-  return header(1) + tools() + ptitle("Размеры") + sheet(S.plans ? 600 : 540, `
+  return header(1) + tools() + sheet(S.plans ? 600 : 540, `
   <p class="cap" style="margin-top:2px">Тип комнаты</p>
   <div class="scrollx" role="group" aria-label="Тип комнаты">${["Спальня", "Гостиная", "Кухня", "Детская", "Кабинет"].map(t => `<button class="chip ${r.type === t ? "on" : ""}" aria-pressed="${r.type === t}" data-type="${t}">${t}</button>`).join("")}</div>
   <p class="cap">Форма</p><div class="scrollx">${shapes.map(([k, l, d]) => `<button class="tile wide ${r.shape === k ? "on" : ""}" aria-pressed="${r.shape === k}" data-shape="${k}" style="flex:none;min-width:150px"><svg width="28" height="26" viewBox="0 0 28 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true">${d}</svg>${l}</button>`).join("")}</div>
@@ -969,7 +1001,7 @@ function vStep2() { const r = S.room; const E = edges(r); const op = r.openings.
     <div class="scrollx" style="margin-top:12px" role="group" aria-label="Стена">${E.map(e => `<button class="chip ${S.selWall === e.i ? "on" : ""}" data-wsel="${e.i}" style="height:34px;font-size:14px">Стена ${e.i + 1}</button>`).join("")}</div>
     ${wallOps.length ? `<div class="scrollx" style="margin-top:4px" role="group" aria-label="Что уже стоит на стене">${wallOps.map(o => `<button class="chip" data-osel="${o.id}" style="height:34px;font-size:14px">${ic("pen", 14)}${NM[o.type]} · ${fmt(o.w)} м</button>`).join("")}</div>` : ""}
     <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${tile("window", "win")}${tile("door", "door")}${tile("balcony", "balc")}${tile("radiator", "rad")}</div>`; }
-  return header(2) + tools() + ptitle("Окна и двери") + `<div class="float glass hint" style="top:116px">${op ? NM[op.type] + " · тап по пустой стене — снять" : "Тап по стене или окну — выбрать"}</div>` + sheet(H, inner, cta("Дальше: отделка")); }
+  return header(2) + tools() + `<div class="float glass hint" style="top:116px">${op ? NM[op.type] + " · тап по пустой стене — снять" : "Тап по стене или окну — выбрать"}</div>` + sheet(H, inner, cta("Дальше: отделка")); }
 
 function vStep3() { const r = S.room; const E = edges(r); const curWall = S.paintWall === "all" ? r.wallDefault : (r.wallColors[S.paintWall] || r.wallDefault);
   const sw = S.paint === "walls" ? WALLC.map(([c, n]) => `<button class="sw ${curWall === c ? "on" : ""}" aria-pressed="${curWall === c}" data-color="${c}"><i style="background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 45%),${c}"></i><span>${n}</span></button>`).join("")
@@ -983,7 +1015,7 @@ function vStep3() { const r = S.room; const E = edges(r); const curWall = S.pain
       : `<p class="sub" style="margin-top:16px">Окон и дверей пока нет. Вернись на шаг 2 и поставь их.</p>`)
     : `${S.paint === "walls" ? `<div class="scrollx" style="margin-top:12px" role="group" aria-label="Какие стены"><button class="chip ${S.paintWall === "all" ? "on" : ""}" data-pw="all" style="height:34px;font-size:14px">Все стены</button>${E.map(e => `<button class="chip ${S.paintWall === e.i ? "on" : ""}" data-pw="${e.i}" style="height:34px;font-size:14px">Стена ${e.i + 1}</button>`).join("")}</div>` : ""}
     <p class="cap" style="margin-top:16px">${S.paint === "walls" ? "Цвет" : "Покрытие"}</p><div class="scrollx">${sw}</div>`;
-  return header(3) + tools() + ptitle("Отделка") + `<div class="float glass hint" style="top:116px">${S.paint === "walls" ? "Тап по стене — красим только её" : S.paint === "floor" ? "Выбери покрытие пола" : "Двери и окна красим вместе"}</div>` +
+  return header(3) + tools() + `<div class="float glass hint" style="top:116px">${S.paint === "walls" ? "Тап по стене — красим только её" : S.paint === "floor" ? "Выбери покрытие пола" : "Двери и окна красим вместе"}</div>` +
   sheet(S.paint === "open" ? 440 : 360, `<div class="seg" role="group" aria-label="Что меняем" style="margin-top:4px">${[["walls", "Стены"], ["floor", "Пол"], ["open", "Проёмы"]].map(([k, l]) => `<button class="${S.paint === k ? "on" : ""}" aria-pressed="${S.paint === k}" data-paint="${k}" style="flex:1">${l}</button>`).join("")}</div>${body}`, cta("Дальше: обстановка")); }
 
 function vEditor(it) { const p = PROD[it.p]; const base = itemBase(it); const photo = isPh(it.mat) && PHOTOS[it.mat]; const curCol = it.col ? it.col.toLowerCase() : null;
@@ -1135,6 +1167,7 @@ function render() {
   setSide(); bindDraw(); bindJoy(); updateSel(); highlightWall();
   const asl = document.querySelector("[data-slot].on"); if (asl) asl.scrollIntoView({ block: "nearest", inline: "center" });
   if (showGL && !walk.on) { controls.update(); renderer.render(scene, camera); }
+  queueSave();
 }
 let tT; function toast(m) { clearTimeout(tT);
   if (S.walk) { const ui = $("#ui"); let t = ui.querySelector(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); ui.appendChild(t); } t.textContent = m; tT = setTimeout(() => t.remove(), 2400); return; }
@@ -1420,7 +1453,7 @@ async function presetSnaps() { for (let i = 0; i < PRESETS.length; i++) { const 
 
 /* ---------- старт ---------- */
 (async () => {
-  resize(); await makeThumbs(); await loadMine(); await presetSnaps(); $("#loading").remove();
+  resize(); await makeThumbs(); await loadMine(); await loadRooms(); await presetSnaps(); $("#loading").remove();
   try { if (localStorage.getItem(ONBKEY) !== "1") S.onb = 0; } catch (_) {}
   render(); tick();
   const h = location.hash.slice(1); if (h) jump(h); else render();
