@@ -4,6 +4,20 @@ import { RoomEnvironment } from "./lib/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "./lib/RoundedBoxGeometry.js";
 
 const $ = s => document.querySelector(s);
+
+/* Без WebGL три.js не поднимет сцену, и раньше приложение просто висело на спиннере
+   без единого слова. Такое бывает в Chrome с выключенным аппаратным ускорением
+   и на старых телефонах, поэтому говорим прямо, а не крутим колесо вечно. */
+(function () {
+  let ok = false;
+  try { const c = document.createElement("canvas"); ok = !!(window.WebGLRenderingContext && (c.getContext("webgl2") || c.getContext("webgl"))); } catch (_) { ok = false; }
+  if (ok) return;
+  const box = document.querySelector("#loading");
+  if (box) box.innerHTML = `<div style="max-width:300px;text-align:center;font-family:'Geist',system-ui,sans-serif">
+    <div style="font-size:17px;line-height:23px;font-weight:600;color:#111114">Не получается показать комнату</div>
+    <div style="font-size:14px;line-height:20px;color:#6B6E76;margin-top:8px">В этом браузере отключён WebGL — без него трёхмерную сцену не нарисовать.<br><br>В Chrome: Настройки → Система → «Использовать аппаратное ускорение». Проверить можно на странице chrome://gpu.</div></div>`;
+  throw new Error("WebGL unavailable");
+})();
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = n => (Math.round(n * 100) / 100).toString().replace(".", ",");
 const rub = n => n.toLocaleString("ru-RU") + " ₽";
