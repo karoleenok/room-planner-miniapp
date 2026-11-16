@@ -313,6 +313,54 @@ const CATALOG = [
   P("tv", "Телевизор 55\u2033", "Декор", "tv", "oz", 39990, 1.24, .08, [["#1B2430", "Экран"]], { wall: 1 }),
   P("monitor", "Монитор 27\u2033", "Декор", "monitor", "ym", 18990, .62, .2, [["#16202B", "Экран"]], { small: 1 })
 ];
+
+/* ---------- База: типовые вещи без магазина. Размеры реальные, цвет любой ---------- */
+ST.base = "База";
+const UPH = [["#E9E4DA", "Молочный"], ["#8E9AAF", "Серо-голубой"], ["#7E9C8A", "Шалфей"], ["#C9785A", "Терракота"]];
+const PNT = [["#F2EFE9", "Белый"], ["#C49A6C", "Дуб"], ["#8A5F3E", "Орех"], ["#2B2D33", "Чёрный"]];
+const cat1 = id => CATALOG.find(x => x.id === id);
+const q5 = x => Math.round(x * 20) / 20;
+const BS = (id, sec, n, cat, b, sizes, vars, mid, extra = {}) => {
+  const Z = sizes.map(([l, w, d, h]) => ({ l, w, d, h })); const z = Z[mid === undefined ? Math.floor(Z.length / 2) : mid];
+  const ws = Z.map(x => x.w), ds = Z.map(x => x.d);
+  const o = { id, sec, n, cat, b, store: "base", price: 0, base: 1, w: z.w, d: z.d, vars, sizes: Z,
+    rsz: [q5(Math.max(.2, Math.min(...ws) - .1)), q5(Math.max(...ws) + .2)], rszD: [q5(Math.max(.2, Math.min(...ds) - .1)), q5(Math.max(...ds) + .15)] };
+  if (z.h) o.h = z.h; return Object.assign(o, extra); };
+const BN = (id, sec, n, cat, b, w, d, vars, extra = {}) => Object.assign({ id, sec, n, cat, b, store: "base", price: 0, base: 1, w, d, vars }, extra);
+const BED = [["90×200", .9, 2], ["120×200", 1.2, 2], ["140×200", 1.4, 2], ["160×200", 1.6, 2], ["180×200", 1.8, 2]];
+const SHELFC = cat1("shelf").cont;
+CATALOG.push(
+  BS("b-bed", "Кровати", "Кровать с изголовьем", "Мебель", "bed", BED, UPH, 3, { wood: "#B08A63", head: .95 }),
+  BS("b-bed-low", "Кровати", "Кровать низкая", "Мебель", "bed", BED, UPH, 3, { wood: "#5E4330", head: .5 }),
+  BS("b-bed-soft", "Кровати", "Кровать с высоким изголовьем", "Мебель", "bed", BED, UPH, 3, { wood: "#D8CFC2", head: 1.3 }),
+  BS("b-bed-kid", "Кровати", "Кровать детская", "Мебель", "bed", [["70×160", .7, 1.6], ["80×190", .8, 1.9], ["90×200", .9, 2]], UPH, 1, { wood: "#DDBF98", head: .7 }),
+  BS("b-sofa", "Диваны и кресла", "Диван", "Мебель", "sofa", [["2-местный 150", 1.5, .9], ["3-местный 210", 2.1, .95], ["4-местный 260", 2.6, 1]], UPH, 1),
+  BS("b-sofa-s", "Диваны и кресла", "Диван компактный", "Мебель", "sofa", [["120", 1.2, .8], ["140", 1.4, .85], ["160", 1.6, .85]], UPH, 1),
+  BS("b-armchair", "Диваны и кресла", "Кресло", "Мебель", "armchair", [["S · 70", .7, .75], ["M · 80", .8, .85], ["L · 95", .95, .95]], UPH, 1),
+  BN("b-pouf", "Диваны и кресла", "Пуф", "Мебель", "pouf", .5, .5, [["#E7C8B8", "Пудра"], ["#F2EFE9", "Белый"], ["#8E9AAF", "Серо-голубой"], ["#7E9C8A", "Шалфей"]]),
+  BN("b-chair", "Диваны и кресла", "Кресло офисное", "Мебель", "chair", .55, .55, [["#F2EFE9", "Белое"], ["#2B2D33", "Чёрное"], ["#8E9AAF", "Серо-голубое"], ["#C9785A", "Терракота"]]),
+  BS("b-desk", "Столы", "Стол письменный", "Мебель", "desk", [["100×50", 1, .5], ["120×60", 1.2, .6], ["140×70", 1.4, .7], ["160×75", 1.6, .75]], PNT, 1, { top: .755 }),
+  BS("b-desk-xl", "Столы", "Стол рабочий широкий", "Мебель", "desk", [["160×80", 1.6, .8], ["180×80", 1.8, .8], ["200×90", 2, .9]], PNT, 1, { top: .755 }),
+  BS("b-dining", "Столы", "Стол обеденный", "Мебель", "desk", [["120×75", 1.2, .75], ["140×80", 1.4, .8], ["160×90", 1.6, .9], ["200×100", 2, 1]], PNT, 1, { top: .755 }),
+  BS("b-coffee", "Столы", "Журнальный столик круглый", "Мебель", "coffee", [["Ø50", .5, .5], ["Ø70", .7, .7], ["Ø90", .9, .9]], [["#E9D8C4", "Травертин"], ["#2B2D33", "Чёрный"], ["#F2EFE9", "Белый"], ["#C49A6C", "Дуб"]], 1, { top: .435, rszD: null }),
+  BS("b-wardrobe2", "Хранение", "Шкаф, 2 створки", "Мебель", "wardrobe", [["80×50×200", .8, .5, 2], ["100×55×210", 1, .55, 2.1], ["120×60×220", 1.2, .6, 2.2]], PNT, 1, { hr: [1.8, 2.6], cont: { doors: 2, plinth: .05, shelves: [.5, .9, 1.3, 1.7], rail: 1.9, handle: 1 } }),
+  BS("b-wardrobe3", "Хранение", "Шкаф, 3 створки", "Мебель", "wardrobe", [["120×55×220", 1.2, .55, 2.2], ["150×60×220", 1.5, .6, 2.2], ["180×60×220", 1.8, .6, 2.2]], PNT, 1, { hr: [1.8, 2.6], cont: { doors: 3, plinth: .05, shelves: [.5, .9, 1.3, 1.7], rail: 1.9, handle: 1 } }),
+  BS("b-wardrobe4", "Хранение", "Шкаф, 4 створки", "Мебель", "wardrobe", [["160×60×220", 1.6, .6, 2.2], ["200×60×220", 2, .6, 2.2], ["240×60×240", 2.4, .6, 2.4]], PNT, 1, { hr: [1.8, 2.6], cont: { doors: 4, plinth: .05, shelves: [.5, .9, 1.3, 1.7], rail: 1.9, handle: 0 } }),
+  BS("b-dresser", "Хранение", "Комод", "Мебель", "dresser", [["S · 60×40", .6, .4], ["M · 90×45", .9, .45], ["L · 120×50", 1.2, .5], ["XL · 160×50", 1.6, .5]], PNT, 1, { top: .82 }),
+  BS("b-night", "Хранение", "Тумбочка прикроватная", "Мебель", "night", [["40×35", .4, .35], ["50×40", .5, .4], ["60×45", .6, .45]], PNT, 1, { top: .5 }),
+  BS("b-tvstand", "Хранение", "Тумба под ТВ", "Мебель", "cabinet", [["100×40", 1, .4, .5], ["140×40", 1.4, .4, .5], ["180×40", 1.8, .4, .5]], PNT, 1, { hr: [.35, .9], hrTop: 1, top: .5, cont: { doors: 2, plinth: .04, shelves: [.25], handle: 1 } }),
+  BS("b-buffet", "Хранение", "Буфет, витрина", "Мебель", "cabinet", [["80×40×100", .8, .4, 1], ["100×40×110", 1, .4, 1.1], ["120×45×120", 1.2, .45, 1.2]], PNT, 1, { hr: [.8, 1.6], hrTop: 1, top: 1.1, cont: { doors: 2, plinth: .04, shelves: [.38, .68], handle: 1 } }),
+  BS("b-shelf", "Хранение", "Стеллаж", "Мебель", "shelf", [["60×30×185", .6, .3, 1.85], ["80×32×185", .8, .32, 1.85], ["120×35×185", 1.2, .35, 1.85]], PNT, 1, { hr: [1.2, 2.4], hrTop: 1, top: 1.85, cont: SHELFC }),
+  BN("b-floorlamp", "Свет", "Торшер", "Свет", "floorlamp", .4, .4, [["#FFF1D6", "Тёплый"], ["#F2E2D0", "Лён"], ["#FFFFFF", "Белый"], ["#2B2D33", "Чёрный"]]),
+  BN("b-pendant", "Свет", "Светильник подвесной", "Свет", "pendant", .45, .45, [["#FFF1D6", "Опал"], ["#F7E3C2", "Янтарь"], ["#FFFFFF", "Белый"], ["#2B2D33", "Чёрный"]], { ceil: 1 }),
+  BN("b-sconce", "Свет", "Бра", "Свет", "sconce", .2, .2, [["#FFF1D6", "Опал"], ["#FFFFFF", "Белый"], ["#2B2D33", "Чёрный"]], { wall: 1 }),
+  BS("b-rug", "Декор и текстиль", "Ковёр прямоугольный", "Текстиль", "rug", [["S · 120×170", 1.2, 1.7], ["M · 160×230", 1.6, 2.3], ["L · 200×300", 2, 3]], [["#C9B49F", "Беж"], ["#8E9AAF", "Серо-голубой"], ["#7E5A4A", "Кирпич"], ["#E9E4DA", "Молочный"]], 1, { flat: 1 }),
+  BS("b-rug-round", "Декор и текстиль", "Ковёр круглый", "Текстиль", "rug", [["Ø100", 1, 1], ["Ø150", 1.5, 1.5], ["Ø200", 2, 2]], [["#D8A9A0", "Розовый"], ["#E9E4DA", "Молочный"], ["#B9C7D6", "Голубой"], ["#C9B49F", "Беж"]], 1, { round: 1, flat: 1, rszD: null }),
+  BN("b-curtain", "Декор и текстиль", "Шторы", "Текстиль", "curtain", 1.8, .2, [["#EDE6DA", "Лён"], ["#C9D3C0", "Шалфей"], ["#E7C8B8", "Пудра"], ["#3E4A55", "Графит"]], { wall: 1 }),
+  BN("b-mirror", "Декор и текстиль", "Зеркало напольное", "Декор", "mirror", .6, .25, [["#E7C8B8", "Розовая рама"], ["#C49A6C", "Дуб"], ["#2B2D33", "Чёрная"], ["#F2EFE9", "Белая"]]),
+  BN("b-plant", "Декор и текстиль", "Растение в горшке", "Декор", "plant", .6, .6, [["#E9D8C4", "Бежевый горшок"], ["#2B2D33", "Чёрный"], ["#C9785A", "Терракота"], ["#F2EFE9", "Белый"]]),
+  BS("b-art", "Декор и текстиль", "Постер в раме", "Декор", "art", [["30×40", .3, .4], ["50×70", .5, .7], ["70×100", .7, 1]], [["#F2EFE9", "Белая рама"], ["#2B2D33", "Чёрная рама"], ["#C49A6C", "Дуб"], ["#8A5F3E", "Орех"]], 1, { wall: 1, seed: 4, rszD: null })
+);
 const PROD = Object.fromEntries(CATALOG.map(p => [p.id, p]));
 
 /* ================= свои вещи: из фото в объект =================
@@ -377,7 +425,7 @@ const dims = it => { const p = PROD[it.p]; return { w: it.w || p.w, d: it.d || p
 const onSurf = it => !!it.on;
 function foot(it) { const q = dims(it); return it.rot % 2 ? { w: q.d, d: q.w } : { w: q.w, d: q.d }; }
 /* высота столешницы, если на предмет можно что-то ставить */
-const topY = it => { const p = PROD[it.p]; return p.top || 0; };
+const topY = it => { const p = PROD[it.p]; return p.hrTop && it.h ? it.h : (p.top || 0); };
 function overlaps(r) { const bad = new Set(); const s = r.items.filter(i => !i.on && !PROD[i.p].flat && !PROD[i.p].wall && !PROD[i.p].ceil);
   for (let a = 0; a < s.length; a++) for (let b = a + 1; b < s.length; b++) { const A = s[a], B = s[b], fa = foot(A), fb = foot(B); if (Math.abs(A.x - B.x) < (fa.w + fb.w) / 2 - .03 && Math.abs(A.z - B.z) < (fa.d + fb.d) / 2 - .03) { bad.add(A.id); bad.add(B.id); } }
   for (const it of s) { const f = foot(it); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) if (!inside(r.pts, it.x + sx * (f.w / 2 - .02), it.z + sz * (f.d / 2 - .02))) bad.add(it.id); }
@@ -748,7 +796,7 @@ function buildRoom(r) {
 const builtItems = {};
 function buildItems(r) {
   scene.remove(itemsG); itemsG = new THREE.Group(); scene.add(itemsG); adaptAll(r);
-  for (const it of r.items) { const p0 = PROD[it.p]; if (!p0) continue; const p = (it.w || it.d) ? { ...p0, w: it.w || p0.w, d: it.d || p0.d } : p0; const base = itemBase(it);
+  for (const it of r.items) { const p0 = PROD[it.p]; if (!p0) continue; const p = (it.w || it.d || it.h) ? { ...p0, w: it.w || p0.w, d: it.d || p0.d, h: it.h || p0.h } : p0; const base = itemBase(it);
     let g = BUILD[p.b](p, base, r, it); if (p.mine) g = skinWrap(g, p, it, r); applyMat(g, it, p, base);
     buildInside(g, p, it, r); g.userData.item = it.id; g.traverse(o => { if (o.isMesh) o.userData.item = it.id; });
     placeObj(g, it, r); itemsG.add(g); builtItems[it.id] = g; }
@@ -848,7 +896,7 @@ function tick() {
 }
 
 /* ================= состояние UI ================= */
-const S = { onb: null, make: null, full: false, open: null, openSill: null, slot: "0", plans: false, wallMode: "auto", wmenu: false, edit: false, screen: "home", rooms: [], room: null, sub: false, selWall: 0, selOpen: null, sel: null, paint: "walls", paintWall: "all", modal: null, toast: null, collapsed: false, lib: "Подборки", store: "all", q: "", draw: null, thumbs: {}, snaps: {} };
+const S = { onb: null, make: null, full: false, open: null, openSill: null, slot: "0", plans: false, wallMode: "auto", wmenu: false, edit: false, screen: "home", rooms: [], room: null, sub: false, selWall: 0, selOpen: null, sel: null, paint: "walls", paintWall: "all", modal: null, toast: null, collapsed: false, lib: "База", store: "all", q: "", draw: null, thumbs: {}, snaps: {} };
 const STEPS = ["", "step1", "step2", "step3", "step4", "step5"];
 const stepNo = () => STEPS.indexOf(S.screen);
 
@@ -862,7 +910,7 @@ const I = { x: '<path d="M6 6l12 12M18 6L6 18"/>', back: '<path d="M15 5l-7 7 7 
   expand: '<path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/>', shrink: '<path d="M9 4v5H4M15 20v-5h5M20 9h-5V4M4 15h5v5"/>',
   box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M3 7l9 4 9-4M12 11v10"/>' };
 const ic = (n, sz = 20, col = "currentColor", sw = 2, vb = 24) => `<svg width="${sz}" height="${sz}" viewBox="0 0 ${vb} ${vb}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
-const storeTag = s => `<span class="store st-${["ym", "wb", "my"].includes(s) ? s : "oz"}">${ST[s] || ST.oz}</span>`;
+const storeTag = s => `<span class="store st-${["ym", "wb", "my", "base"].includes(s) ? s : "oz"}">${ST[s] || ST.oz}</span>`;
 
 const STEPT = ["", "Размеры", "Окна и двери", "Отделка", "Мебель", "Итог"];
 function header(step) { let b = ""; for (let i = 1; i <= 5; i++) b += `<span class="${i < step ? "d" : i === step ? "c" : ""}"></span>`;
@@ -870,17 +918,15 @@ function header(step) { let b = ""; for (let i = 1; i <= 5; i++) b += `<span cla
 const WMODES = [["auto", "Срез", "ближние стены убираются"], ["ghost", "Прозрачные", "ближние стены просвечивают"], ["up", "Все стены", "как есть, удобно сверху"], ["down", "Низкие", "стены вровень с полом"]];
 function wmenu() { return `<div class="wmenu glass" role="menu" aria-label="Режим стен">${WMODES.map(([k, l, s]) => `<button role="menuitemradio" aria-checked="${S.wallMode === k}" class="${S.wallMode === k ? "on" : ""}" data-wmode="${k}"><b>${l}</b><span>${s}</span></button>`).join("")}</div>`; }
 function tools(opts = {}) { const n = S.room && S.room.night; const top = controls.getPolarAngle() < .3; return `<div class="tools glass" role="toolbar" aria-label="Вид">
-  <button data-act="z-" aria-label="Отдалить комнату">${ic("zout", 20, "currentColor", 1.8)}</button>
-  <button data-act="z+" aria-label="Приблизить комнату">${ic("zin", 20, "currentColor", 1.8)}</button><hr>
   <button class="${top ? "on" : ""}" aria-pressed="${top}" data-act="cam-top" aria-label="Вид сверху">${ic("topv", 20, "currentColor", 1.8)}</button>
   <button class="${S.wmenu ? "on" : ""}" aria-expanded="${!!S.wmenu}" data-act="walls" aria-label="Режим стен">${ic("house", 20, "currentColor", 1.8)}</button>
   <button data-act="walk" aria-label="Прогуляться по комнате">${ic("walk", 20, "currentColor", 1.8)}</button><hr>
   <button data-act="night" aria-label="${n ? "Включить день" : "Включить вечер"}">${ic(n ? "sun" : "moon", 20, "currentColor", 1.8)}</button><hr>
   <button class="${S.full ? "on" : ""}" aria-pressed="${!!S.full}" data-act="full" aria-label="${S.full ? "Показать панель" : "Комната на весь экран"}">${ic(S.full ? "shrink" : "expand", 20, "currentColor", 1.8)}</button></div>${S.wmenu ? wmenu() : ""}`; }
 function sheet(h, inner, cta, pb = 104) {
-  if (S.full) { setOffset(0); return `<div class="bottom" style="justify-content:center"><button class="chip dark" data-act="full" style="height:46px;padding:0 20px;gap:8px">${ic("shrink", 16, "#FFFFFF", 2)}Показать панель</button></div>`; }
+  if (S.full) { setOffset(0); $("#phone").style.setProperty("--sh", "72px"); return `<div class="bottom" style="justify-content:center"><button class="chip dark" data-act="full" style="height:46px;padding:0 20px;gap:8px">${ic("shrink", 16, "#FFFFFF", 2)}Показать панель</button></div>`; }
   /* выше 520 панель залезает под столбик инструментов справа и прячет кнопки в её шапке */
-  const H = S.collapsed ? 128 : Math.min(h, 520); setOffset(H - 104 < 0 ? 0 : H - 60);
+  const H = S.collapsed ? 128 : Math.min(h, 520); setOffset(H - 104 < 0 ? 0 : H - 60); $("#phone").style.setProperty("--sh", H + "px");
   return `<div class="sheet" style="height:${H}px;padding-bottom:${pb}px"><button class="grabbtn" data-act="collapse" aria-label="${S.collapsed ? "Развернуть панель" : "Свернуть панель, чтобы видеть комнату"}"><i></i></button><div class="in">${inner}</div></div>
   <div class="rotpad glass" style="bottom:${H + 12}px" role="toolbar" aria-label="Повернуть комнату"><button data-act="rot-l" aria-label="Повернуть комнату влево">${ic("rotl", 20, "currentColor", 1.9)}</button><button data-act="rot-r" aria-label="Повернуть комнату вправо">${ic("rot", 20, "currentColor", 1.9)}</button></div>${cta || ""}`; }
 const cta = (t, act = "next") => `<div class="bottom"><button class="cta" data-act="${act}">${t}${ic("next", 18, "#FFFFFF", 2.2)}</button></div>`;
@@ -989,6 +1035,7 @@ function vDraw() { const d = S.draw; const W = 390, Hh = 600, cell = 40, ox = 35
   <div class="float glass hint" style="top:66px;z-index:6">Клетка — 50 см · точки прилипают к 25 см</div>
   <div class="drawbar"><button class="cta ghost" data-act="drawundo" style="flex:1" ${d.pts.length ? "" : "disabled"}>${ic("undo", 18)}Шаг назад</button><button class="cta" data-act="drawdone" style="flex:1" ${d.pts.length > 2 ? "" : "disabled aria-disabled=true"}>${ic("check", 18, "#fff", 2.4)}Готово</button></div>`; }
 
+const hl = t => `<p class="hintline">${t}</p>`;
 const OPNAME = { window: "Окно", door: "Дверь", balcony: "Балкон", radiator: "Батарея" };
 const opSub = (r, o) => `Стена ${o.wall + 1} · ${o.type === "radiator" ? fmt(o.w) + " м" : fmt(o.w) + " × " + fmt(oH(o)) + " м"}`;
 const rngHtml = ([k, l, mn, mx, v]) => `<div class="rng"><div class="rh"><span>${l}</span><output data-out="${k}">${fmt(v)} м</output></div><input type="range" data-opf="${k}" min="${mn}" max="${Math.max(mx, mn)}" step=".05" value="${v}" style="--p:${pct(v, mn, mx)}%" aria-label="${l}, метры"${mx <= mn ? " disabled" : ""}></div>`;
@@ -1007,7 +1054,7 @@ function vStep2() { const r = S.room; const E = edges(r); const op = r.openings.
     <div class="scrollx" style="margin-top:12px" role="group" aria-label="Стена">${E.map(e => `<button class="chip ${S.selWall === e.i ? "on" : ""}" data-wsel="${e.i}" style="height:34px;font-size:14px">Стена ${e.i + 1}</button>`).join("")}</div>
     ${wallOps.length ? `<div class="scrollx" style="margin-top:4px" role="group" aria-label="Что уже стоит на стене">${wallOps.map(o => `<button class="chip" data-osel="${o.id}" style="height:34px;font-size:14px">${ic("pen", 14)}${NM[o.type]} · ${fmt(o.w)} м</button>`).join("")}</div>` : ""}
     <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${tile("window", "win")}${tile("door", "door")}${tile("balcony", "balc")}${tile("radiator", "rad")}</div>`; }
-  return header(2) + tools() + `<div class="float glass hint" style="top:116px">${op ? NM[op.type] + " · тап по пустой стене — снять" : "Тап по стене или окну — выбрать"}</div>` + sheet(H, inner, cta("Дальше: отделка")); }
+  return header(2) + tools() + sheet(H, hl(op ? NM[op.type] + " · тап по пустой стене — снять" : "Тап по стене или окну — выбрать") + inner, cta("Дальше: отделка")); }
 
 function vStep3() { const r = S.room; const E = edges(r); const curWall = S.paintWall === "all" ? r.wallDefault : (r.wallColors[S.paintWall] || r.wallDefault);
   const sw = S.paint === "walls" ? WALLC.map(([c, n]) => `<button class="sw ${curWall === c ? "on" : ""}" aria-pressed="${curWall === c}" data-color="${c}"><i style="background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 45%),${c}"></i><span>${n}</span></button>`).join("")
@@ -1021,9 +1068,13 @@ function vStep3() { const r = S.room; const E = edges(r); const curWall = S.pain
       : `<p class="sub" style="margin-top:16px">Окон и дверей пока нет. Вернись на шаг 2 и поставь их.</p>`)
     : `${S.paint === "walls" ? `<div class="scrollx" style="margin-top:12px" role="group" aria-label="Какие стены"><button class="chip ${S.paintWall === "all" ? "on" : ""}" data-pw="all" style="height:34px;font-size:14px">Все стены</button>${E.map(e => `<button class="chip ${S.paintWall === e.i ? "on" : ""}" data-pw="${e.i}" style="height:34px;font-size:14px">Стена ${e.i + 1}</button>`).join("")}</div>` : ""}
     <p class="cap" style="margin-top:16px">${S.paint === "walls" ? "Цвет" : "Покрытие"}</p><div class="scrollx">${sw}</div>`;
-  return header(3) + tools() + `<div class="float glass hint" style="top:116px">${S.paint === "walls" ? "Тап по стене — красим только её" : S.paint === "floor" ? "Выбери покрытие пола" : "Двери и окна красим вместе"}</div>` +
-  sheet(S.paint === "open" ? 440 : 360, `<div class="seg" role="group" aria-label="Что меняем" style="margin-top:4px">${[["walls", "Стены"], ["floor", "Пол"], ["open", "Проёмы"]].map(([k, l]) => `<button class="${S.paint === k ? "on" : ""}" aria-pressed="${S.paint === k}" data-paint="${k}" style="flex:1">${l}</button>`).join("")}</div>${body}`, cta("Дальше: обстановка")); }
+  return header(3) + tools() +
+  sheet(S.paint === "open" ? 470 : 400, hl(S.paint === "walls" ? "Тап по стене — красим только её" : S.paint === "floor" ? "Выбери покрытие пола" : "Двери и окна красим вместе") + `<div class="seg" role="group" aria-label="Что меняем" style="margin-top:4px">${[["walls", "Стены"], ["floor", "Пол"], ["open", "Проёмы"]].map(([k, l]) => `<button class="${S.paint === k ? "on" : ""}" aria-pressed="${S.paint === k}" data-paint="${k}" style="flex:1">${l}</button>`).join("")}</div>${body}`, cta("Дальше: обстановка")); }
 
+const dimTxt = (it, p) => { const w = it.w || p.w, d = it.d || p.d; return p.round || p.b === "coffee" ? "Ø" + Math.round(w * 100) + " см" : Math.round(w * 100) + "×" + Math.round(d * 100) + " см" + (p.hr ? ", выс. " + Math.round((it.h || p.h) * 100) : ""); };
+function edTabs(it) { const p = PROD[it.p]; const t = []; if (p.rsz) t.push(["size", "Размер"]); if (p.b === "art") t.push(["poster", "Постер"]); t.push(["color", "Цвет"], ["mat", "Материал"]); return t; }
+const edTab = it => { const t = edTabs(it); return t.some(x => x[0] === S.etab) ? S.etab : t[0][0]; };
+const vEdH = it => { const p = PROD[it.p], t = edTab(it); return t === "size" ? 182 + 62 * (1 + (p.rszD ? 1 : 0) + (p.hr ? 1 : 0)) : t === "poster" ? 290 : 262; };
 function vEditor(it) { const p = PROD[it.p]; const base = itemBase(it); const photo = isPh(it.mat) && PHOTOS[it.mat]; const curCol = it.col ? it.col.toLowerCase() : null;
   const dot = c => `radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 45%),${c}`;
   const sv = p.vars.map((v, i) => `<button class="sw ${!curCol && !photo && (it.v || 0) === i ? "on" : ""}" aria-pressed="${!curCol && !photo && (it.v || 0) === i}" data-var="${i}"><i style="background:${dot(v[0])}"></i><span>${v[1]}</span></button>`).join("");
@@ -1033,18 +1084,18 @@ function vEditor(it) { const p = PROD[it.p]; const base = itemBase(it); const ph
   const sm = MATS.map(([k, n]) => { const on = (it.mat || "none") === k; const img = k === "none" ? "" : `background-image:url(${matTex(k).image.toDataURL("image/jpeg", .6)});background-size:220%;background-blend-mode:multiply;`; return `<button class="sw ${on ? "on" : ""}" aria-pressed="${on}" data-mat="${k}"><i style="background-color:${photo ? "#ddd" : base};${img}"></i><span>${n}</span></button>`; }).join("");
   const ph = `<label class="sw ${photo ? "on" : ""}" aria-label="Загрузить фото ткани или материала"><i style="${photo ? `background:url(${photo.url}) center/cover` : "background:#F1F2F5;display:flex;align-items:center;justify-content:center"}">${photo ? "" : ic("image", 22, "#2B2D33", 1.8)}</i><input type="file" accept="image/*" data-photo><span>Своё фото</span></label>`;
   const rr = (key, label, lim, cur) => `<div class="rng"><div class="rh"><span>${label}</span><output data-r${key}out>${fmt(cur)} м</output></div><input type="range" data-r${key} min="${lim[0]}" max="${lim[1]}" step=".05" value="${cur}" style="--p:${pct(cur, lim[0], lim[1])}%" aria-label="${label}, метры"></div>`;
-  const szRow = p.rsz ? `<p class="cap" style="margin:12px 0 2px">Размер</p>
-    <div class="scrollx" style="padding-bottom:2px">${[["S", p.rsz[0]], ["M", Math.round((p.rsz[0] + p.rsz[1]) / 2 * 20) / 20], ["L", p.rsz[1]]].map(([l, v]) => `<button class="chip ${Math.abs((it.w || p.w) - v) < .03 ? "on" : ""}" data-rpre="${v}" style="height:34px;font-size:14px">${l} · ${fmt(v)} м</button>`).join("")}</div>
-    ${rr("w", "Ширина", p.rsz, it.w || p.w)}${p.rszD ? rr("d", "Глубина", p.rszD, it.d || p.d) : ""}` : "";
-  const posterRow = p.b === "art" ? `<p class="cap" style="margin:12px 0 4px">Свой постер</p>
-    <div class="scrollx"><label class="sw ${it.img ? "on" : ""}" aria-label="Загрузить своё изображение"><i style="${it.img && PHOTOS[it.img] ? `background:url(${PHOTOS[it.img].url}) center/cover` : "background:#F1F2F4;display:flex;align-items:center;justify-content:center"}">${it.img ? "" : ic("image", 22, "#2B2D33", 1.8)}</i><input type="file" accept="image/*" data-poster><span>Загрузить</span></label>
-    ${it.img ? `<button class="sw" data-act="posteroff"><i style="background:#F1F2F4;display:flex;align-items:center;justify-content:center">${ic("undo", 20, "#2B2D33", 2)}</i><span>Вернуть</span></button>` : ""}</div>
-    <p class="t13">Картинка встаёт в раму, пропорции подгоняются.</p>` : "";
-  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="grow"><h1 class="h2 plain" style="margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</h1><p class="sub">${colorName(it)}${p.rsz ? " · " + fmt(it.w || p.w) + " м" : ""}</p></div><button class="chip dark" data-act="editdone">Готово</button></div>
-  ${szRow}${posterRow}
-  <p class="cap" style="margin:12px 0 4px">Цвет</p><div class="scrollx" role="group" aria-label="Цвет">${sv}${cust}${sp}</div>
-  <p class="cap" style="margin:8px 0 4px">Материал</p><div class="scrollx" role="group" aria-label="Материал">${sm}${ph}</div>
-  <p class="t13" style="margin-top:4px">Свои цвет и фото нужны для примерки. Купить можно цвет магазина или ближайший к нему.</p>`; }
+  const cw = it.w || p.w, cd = it.d || p.d;
+  const chips = p.sizes ? p.sizes.map((z, i) => `<button class="chip ${Math.abs(cw - z.w) < .03 && Math.abs(cd - z.d) < .03 ? "on" : ""}" data-rsz="${i}" style="height:34px;font-size:14px">${z.l}</button>`).join("")
+    : p.rsz ? [["S", p.rsz[0]], ["M", Math.round((p.rsz[0] + p.rsz[1]) / 2 * 20) / 20], ["L", p.rsz[1]]].map(([l, v]) => `<button class="chip ${Math.abs(cw - v) < .03 ? "on" : ""}" data-rpre="${v}" style="height:34px;font-size:14px">${l} · ${fmt(v)} м</button>`).join("") : "";
+  const tb = edTab(it);
+  let body = "";
+  if (tb === "size") body = `<div class="scrollx" style="padding-top:4px;padding-bottom:10px">${chips}</div>${rr("w", p.round || p.b === "coffee" ? "Диаметр" : "Ширина", p.rsz, cw)}${p.rszD ? rr("d", "Глубина", p.rszD, cd) : ""}${p.hr ? rr("h", "Высота", p.hr, it.h || p.h) : ""}`;
+  else if (tb === "poster") body = `<div class="scrollx" style="padding-top:4px"><label class="sw ${it.img ? "on" : ""}" aria-label="Загрузить своё изображение"><i style="${it.img && PHOTOS[it.img] ? `background:url(${PHOTOS[it.img].url}) center/cover` : "background:#F1F2F4;display:flex;align-items:center;justify-content:center"}">${it.img ? "" : ic("image", 22, "#2B2D33", 1.8)}</i><input type="file" accept="image/*" data-poster><span>Загрузить</span></label>
+    ${it.img ? `<button class="sw" data-act="posteroff"><i style="background:#F1F2F4;display:flex;align-items:center;justify-content:center">${ic("undo", 20, "#2B2D33", 2)}</i><span>Вернуть</span></button>` : ""}</div><p class="t13">Картинка встаёт в раму, пропорции подгоняются.</p>`;
+  else if (tb === "color") body = `<div class="scrollx" role="group" aria-label="Цвет" style="padding-top:4px">${sv}${cust}${sp}</div>${p.store === "base" ? "" : `<p class="t13" style="margin-top:2px">Свой цвет нужен для примерки. В магазине выбери ближайший.</p>`}`;
+  else body = `<div class="scrollx" role="group" aria-label="Материал" style="padding-top:4px">${sm}${ph}</div>`;
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="grow" style="min-width:0"><h1 class="h2 plain" style="margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</h1><p class="sub" style="margin:0">${colorName(it)} · ${dimTxt(it, p)}</p></div><button class="chip dark" data-act="editdone">Готово</button></div>
+  <div class="etabs" role="tablist" aria-label="Что менять">${edTabs(it).map(([k, l]) => `<button role="tab" aria-selected="${tb === k}" class="chip ${tb === k ? "dark" : ""}" data-etab="${k}" style="height:34px;font-size:14px">${l}</button>`).join("")}</div>${body}`; }
 
 function vInside() {
   const r = S.room; const sill = S.openSill ? r.openings.find(o => o.id === S.openSill) : null;
@@ -1105,13 +1156,16 @@ function vMake() {
 }
 
 function vStep4() { const r = S.room; const it = r.items.find(i => i.id === S.sel); const bad = overlaps(r); const ed = !!(it && S.edit);
-  const tabs = ["Подборки", "Моё", "Всё", "Мебель", "Свет", "Декор", "Текстиль"]; const stores = [["all", "Все магазины"], ["ym", ST.ym], ["wb", ST.wb], ["oz", ST.oz]].concat(MY.length ? [["my", "Моё"]] : []);
+  const tabs = ["База", "Подборки", "Моё", "Всё", "Мебель", "Свет", "Декор", "Текстиль"]; const stores = [["all", "Все магазины"], ["ym", ST.ym], ["wb", ST.wb], ["oz", ST.oz]].concat(MY.length ? [["my", "Моё"]] : []);
   const mkTile = `<button class="pc mk" data-act="make"><span class="im" style="display:flex;align-items:center;justify-content:center;background:transparent">${ic("plus", 30, "#0B63E5", 2)}</span><b style="color:var(--blue-d)">Своя вещь из фото</b><span class="meta"><span class="t13">фото → предмет</span></span></button>`;
   let body;
-  if (S.lib === "Моё") body = `<div class="grid3" style="margin-top:8px">${mkTile}${myList().map(p => `<span style="position:relative;display:block"><button class="pc lg" data-add="${p.id}" style="width:100%"><span class="im"><img src="${S.thumbs[p.id] || ""}" alt=""></span><b>${esc(p.n)}</b><span class="meta"><span class="price">${p.price ? rub(p.price) : "—"}</span><span class="t13">${fmt(p.w)} м</span></span><span style="padding:0 4px">${storeTag("my")}</span></button><button class="xdel" data-mydel="${p.id}" aria-label="Удалить «${esc(p.n)}» из библиотеки">${ic("trash", 15, "#C4262E", 2)}</button></span>`).join("")}</div>
+  if (S.lib === "База") { const q = S.q.trim().toLowerCase(); const list = CATALOG.filter(p => p.base && (!q || p.n.toLowerCase().includes(q) || p.sec.toLowerCase().includes(q))); const secs = []; for (const p of list) if (!secs.includes(p.sec)) secs.push(p.sec);
+    const meta = p => p.sizes ? (p.round || p.b === "coffee" || p.b === "rug" && p.round ? "Ø" + Math.round(p.sizes[0].w * 100) + "–" + Math.round(p.sizes[p.sizes.length - 1].w * 100) : Math.round(p.sizes[0].w * 100) + "–" + Math.round(p.sizes[p.sizes.length - 1].w * 100)) + " см" : Math.round(p.w * 100) + " см";
+    body = (secs.length ? secs.map(sc => `<p class="sec">${sc}</p><div class="grid3">${list.filter(p => p.sec === sc).map(p => `<button class="pc lg" data-add="${p.id}"><span class="im"><img src="${S.thumbs[p.id]}" alt=""></span><b>${p.n}</b><span class="meta"><span class="price" style="font-size:13px">${meta(p)}</span><span class="dots">${p.vars.map(v => `<i style="background:${v[0]}"></i>`).join("")}</span></span></button>`).join("")}</div>`).join("") : `<p class="sub" style="margin-top:12px">Ничего не нашли</p>`); }
+  else if (S.lib === "Моё") body = `<div class="grid3" style="margin-top:8px">${mkTile}${myList().map(p => `<span style="position:relative;display:block"><button class="pc lg" data-add="${p.id}" style="width:100%"><span class="im"><img src="${S.thumbs[p.id] || ""}" alt=""></span><b>${esc(p.n)}</b><span class="meta"><span class="price">${p.price ? rub(p.price) : "—"}</span><span class="t13">${fmt(p.w)} м</span></span><span style="padding:0 4px">${storeTag("my")}</span></button><button class="xdel" data-mydel="${p.id}" aria-label="Удалить «${esc(p.n)}» из библиотеки">${ic("trash", 15, "#C4262E", 2)}</button></span>`).join("")}</div>
     <p class="t13" style="margin-top:10px">${MY.length ? `Своих вещей: ${MY.length} из ${MYMAX}. Хранятся в этом браузере — на сервере их пока нет, так что на другом телефоне их не будет.` : "Фото вещи или снимок карточки товара — и предмет встанет в комнату. Работает без интернета и без нейросетей."}</p>`;
   else if (S.lib === "Подборки") body = `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${COLLS.map((c, i) => `<div class="lg" style="border-radius:20px;padding:12px;display:flex;gap:12px;align-items:center"><div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:84px;flex:none">${c.items.slice(0, 4).map(k => `<span style="height:40px;border-radius:8px;background:#F4F3F0;overflow:hidden"><img src="${S.thumbs[k]}" alt="" style="width:100%;height:100%;object-fit:contain"></span>`).join("")}</div><div class="grow"><div class="t15">${c.t}</div><div class="t13">${c.by} · ${c.items.length} товаров</div>${c.ad ? `<span class="ad" style="margin-top:4px">Реклама · ${c.ad}</span>` : ""}</div><button class="chip lg-dark" data-coll="${i}" style="height:36px;padding:0 12px;font-size:14px">Добавить</button></div>`).join("")}</div>`;
-  if (S.lib !== "Подборки" && S.lib !== "Моё") { const q = S.q.trim().toLowerCase(); const list = allProd().filter(p => (S.lib === "Всё" || p.cat === S.lib) && (S.store === "all" || p.store === S.store) && (!q || p.n.toLowerCase().includes(q)));
+  if (S.lib !== "Подборки" && S.lib !== "Моё" && S.lib !== "База") { const q = S.q.trim().toLowerCase(); const list = allProd().filter(p => (S.lib === "Всё" || p.cat === S.lib) && !p.base && (S.store === "all" || p.store === S.store) && (!q || p.n.toLowerCase().includes(q)));
     body = `<div class="scrollx" style="margin-top:4px" role="group" aria-label="Магазин">${stores.map(([k, l]) => `<button class="chip ${S.store === k ? "on" : ""}" data-store="${k}" style="height:32px;font-size:13px;padding:0 12px">${l}</button>`).join("")}</div>
     <div class="grid3" style="margin-top:8px">${list.length ? list.map(p => `<button class="pc lg" data-add="${p.id}"><span class="im"><img src="${S.thumbs[p.id]}" alt=""></span><b>${p.n}</b><span class="meta"><span class="price">${rub(p.price)}</span><span class="dots">${p.vars.map(v => `<i style="background:${v[0]}"></i>`).join("")}</span></span><span style="padding:0 4px">${storeTag(p.store)}</span></button>`).join("") : `<p class="sub">Ничего не нашли</p>`}</div>`; }
   const allLocked = r.items.length > 0 && r.items.every(i => i.locked);
@@ -1120,13 +1174,11 @@ function vStep4() { const r = S.room; const it = r.items.find(i => i.id === S.se
   const dis = it && it.locked ? ' style="opacity:.35" aria-disabled="true"' : "";
   if (S.make) return header(4) + tools() + sheet(620, vMake(), `<div class="bottom"><button class="cta" data-act="makeadd"${S.make.img && S.make.ar ? "" : " disabled aria-disabled=\"true\""}>Добавить в библиотеку${ic("check", 18, "#FFFFFF", 2.4)}</button></div>`);
   const ins = vInside(); if (ins) return header(4) + tools() + sheet(480, ins, "");
-  return header(4) + tools() + (it ? `<div class="float glass pill" role="toolbar" aria-label="${PROD[it.p].n}" style="top:68px"><b style="font-weight:600;margin-right:4px;max-width:68px;overflow:hidden;text-overflow:ellipsis">${PROD[it.p].n.split(" «")[0].split(" ")[0]}</b>
-    ${PROD[it.p].wall ? "" : `<button class="ib" data-it="rot" aria-label="Повернуть"${dis}>${ic("rot", 18)}</button>`}${isCont(PROD[it.p]) ? `<button class="ib ${it.open ? "on" : ""}" data-it="open" aria-pressed="${!!it.open}" style="width:auto;padding:0 12px;gap:6px;font-size:14px;font-weight:600">${ic("box", 16)}${it.open ? "Закрыть" : "Открыть"}</button>` : ""}<button class="ib ${S.edit ? "on" : ""}" data-it="color" aria-pressed="${!!S.edit}" aria-label="Цвет и материал">${ic("palette", 18)}</button><button class="ib ${it.locked ? "on" : ""}" data-it="lock" aria-pressed="${!!it.locked}" aria-label="${it.locked ? "Открепить предмет" : "Закрепить предмет, чтобы случайно не сдвинуть"}">${ic(it.locked ? "lock" : "unlock", 18)}</button><button class="ib" data-it="buy" aria-label="Где купить">${ic("tag", 18)}</button><button class="ib" data-it="del" aria-label="Удалить"${dis}>${ic("trash", 18, "#C4262E")}</button></div>`
-    : `<div class="float glass hint" style="top:70px">${r.items.length ? r.items.length + " в комнате · тяни, чтобы переставить, тап — действия" : "Выбери вещь в библиотеке"}</div>`) +
-    (bad.size ? `<div class="float glass hint warn" style="top:${it ? 124 : 118}px">Предметы пересекаются или вылезли за стену</div>`
-      : it && !S.edit && PROD[it.p].top ? `<div class="float glass hint" style="top:124px">Сверху можно что-то поставить: тяни книги, вазу или монитор на столешницу</div>`
-      : it && !S.edit && isCont(PROD[it.p]) && !it.open ? `<div class="float glass hint" style="top:124px">Жми «Открыть» — увидишь полки и сможешь положить вещи внутрь</div>` : "") +
-    sheet(ed ? (PROD[it.p].rsz || PROD[it.p].b === "art" ? 560 : 480) : 430, ed ? vEditor(it) : lib, cta("Дальше: итог")); }
+  const pr = it && PROD[it.p];
+  const dock = it ? `<div class="dock" role="toolbar" aria-label="${esc(pr.n)}"><div class="dkn">${esc(pr.n)}<span> · ${dimTxt(it, pr)}</span></div><div class="dkrow"><button class="ib add" data-act="desel" aria-label="Добавить ещё из библиотеки">${ic("plus", 18, "currentColor", 2.2)}<span>Ещё</span></button>
+    ${pr.wall ? "" : `<button class="ib" data-it="rot" aria-label="Повернуть"${dis}>${ic("rot", 18)}</button>`}${isCont(pr) ? `<button class="ib ${it.open ? "on" : ""}" data-it="open" aria-pressed="${!!it.open}" aria-label="${it.open ? "Закрыть дверцы" : "Открыть дверцы"}">${ic("box", 18)}</button>` : ""}<button class="ib ${S.edit ? "on" : ""}" data-it="color" aria-pressed="${!!S.edit}" aria-label="Размер, цвет и материал">${ic("palette", 18)}</button><button class="ib ${it.locked ? "on" : ""}" data-it="lock" aria-pressed="${!!it.locked}" aria-label="${it.locked ? "Открепить предмет" : "Закрепить предмет, чтобы случайно не сдвинуть"}">${ic(it.locked ? "lock" : "unlock", 18)}</button><button class="ib" data-it="buy" aria-label="${pr.store === "base" ? "Похожие в магазинах" : "Где купить"}">${ic("tag", 18)}</button><button class="ib" data-it="del" aria-label="Удалить"${dis}>${ic("trash", 18, "#C4262E")}</button></div></div>` : "";
+  return header(4) + tools() + (bad.size ? `<div class="float glass hint warn" style="top:64px">Предметы пересекаются или вылезли за стену</div>` : "") +
+    (ed ? sheet(vEdH(it), vEditor(it), "", 20) : it ? sheet(212, dock, cta("Дальше: итог")) : sheet(440, lib, cta("Дальше: итог"))); }
 const COLLS = [
   { t: "Уютный вечер", by: "Канал @ohmyprompts", items: ["garland", "rug-round", "pouf", "vase", "floorlamp"] },
   { t: "Спальня за выходные", by: "Подборка Wildberries", ad: "[партнёр]", items: ["bed-scandi", "night", "art1", "plant", "curtain"] },
@@ -1135,21 +1187,21 @@ const COLLS = [
 ];
 
 function vStep5() { const r = S.room; const sum = r.items.reduce((a, i) => a + PROD[i.p].price, 0); const by = {}; for (const i of r.items) (by[PROD[i.p].store] = by[PROD[i.p].store] || []).push(i);
-  return header(5) + tools() + sheet(520, `<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div><h1 class="h1">Итог</h1><p class="sub">${r.items.length} предм. · цены демо</p></div><div style="text-align:right"><div class="t13">Всего</div><div style="font-size:24px;line-height:30px;font-weight:700">${rub(sum)}</div></div></div>
+  return header(5) + tools() + sheet(520, `<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div><h1 class="h1">Итог</h1><p class="sub">${r.items.length} предм.${sum ? " · цены демо" : ""}</p></div><div style="text-align:right"><div class="t13">Всего</div><div style="font-size:24px;line-height:30px;font-weight:700">${sum ? rub(sum) : "—"}</div></div></div>
   <button class="cta ghost" data-act="walk" style="margin-top:12px;height:48px;font-size:15px">${ic("walk", 18)}Прогуляться по комнате</button>
-  ${Object.entries(by).map(([s, its]) => `<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">${storeTag(s)}<span class="t13">${its.length} шт. · ${rub(its.reduce((a, i) => a + PROD[i.p].price, 0))}</span></div><div class="list">${its.map(i => `<button class="li" data-prod="${i.id}"><span class="thumb"><img src="${S.thumbs[i.p + ":" + (i.v || 0)]}" alt=""></span><span class="grow"><span class="t15" style="display:block">${PROD[i.p].n}</span><span class="t13">${colorName(i)}</span></span><span class="price">${rub(PROD[i.p].price)}</span></button>`).join("")}</div><button class="link" data-act="cart" style="margin-top:0">Собрать корзину на ${ST[s]}</button>`).join("") || `<p class="sub">Комната пока пустая</p>`}`,
+  ${Object.entries(by).map(([s, its]) => `<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">${storeTag(s)}<span class="t13">${its.length} шт.${s === "base" ? "" : " · " + rub(its.reduce((a, i) => a + PROD[i.p].price, 0))}</span></div><div class="list">${its.map(i => `<button class="li" data-prod="${i.id}"><span class="thumb"><img src="${S.thumbs[i.p + ":" + (i.v || 0)]}" alt=""></span><span class="grow"><span class="t15" style="display:block">${PROD[i.p].n}</span><span class="t13">${colorName(i)} · ${dimTxt(i, PROD[i.p])}</span></span><span class="price">${PROD[i.p].base ? "" : rub(PROD[i.p].price)}</span></button>`).join("")}</div>${s === "base" ? `<p class="t13" style="margin:0 0 4px">Типовые вещи без магазина. Размеры и цвет указаны у каждой, по ним можно подобрать товар. Кнопка с ценником на шаге 4 покажет похожие в магазинах.</p>` : `<button class="link" data-act="cart" style="margin-top:0">Собрать корзину на ${ST[s]}</button>`}`).join("") || `<p class="sub">Комната пока пустая</p>`}`,
   `<div class="bottom" style="flex-direction:column"><div class="row"><button class="cta ghost" data-act="variant" style="flex:1;font-size:15px;height:48px">${ic("layers", 18)}Вариант</button><button class="cta ghost" data-act="share" style="flex:1;font-size:15px;height:48px">${ic("share", 18)}Поделиться</button></div><button class="cta" data-act="finish">Готово${ic("check", 18, "#FFFFFF", 2.4)}</button></div>`, 172); }
 
 function vWalk() { setOffset(0); return `<div class="top"><button class="icb glass" data-act="walkexit" aria-label="Выйти из прогулки">${ic("x", 20, "#111114", 2.2)}</button><div class="prog glass">Прогулка · тап по полу — идти</div><button class="icb glass" data-act="night" aria-label="День или вечер">${ic(S.room.night ? "sun" : "moon", 20, "#111114", 1.8)}</button></div><div class="joy glass" id="joy" aria-label="Джойстик: идти"><i></i></div><div class="walkbar glass" role="toolbar" aria-label="Камера"><button data-act="wz-" aria-label="Отдалить: шире угол обзора">${ic("zout", 20, "currentColor", 1.9)}</button><div style="font-size:11px;line-height:14px;text-align:center;font-weight:600;color:#6B6E76" aria-hidden="true">${Math.round(walk.fov)}°</div><button data-act="wz+" aria-label="Приблизить: уже угол обзора">${ic("zin", 20, "currentColor", 1.9)}</button><button data-act="weye" aria-label="Высота глаз: стоя, сидя, сверху">${ic("eye", 20, "currentColor", 1.9)}</button></div>`; }
 function vGuest() { const r = S.room; return `<div class="top"><button class="icb glass" data-act="home" aria-label="Закрыть">${ic("x", 20, "#111114", 2.2)}</button><div class="prog glass">Комната от @karolenok</div><span style="width:44px"></span></div>` + tools() + sheet(330, `<h1 class="h2 plain">${esc(r.name)}</h1><p class="sub">${fmt(area(r))} м² · ${r.items.length} предм.</p><div class="list" style="margin-top:8px">${r.items.map(i => `<button class="li" data-prod="${i.id}"><span class="thumb"><img src="${S.thumbs[i.p]}" alt=""></span><span class="grow t15">${PROD[i.p].n}</span>${storeTag(PROD[i.p].store)}</button>`).join("")}</div>`, cta("Сделать такую же у себя", "copyroom")); }
 
 function vModal() { if (!S.modal) return ""; let b = "";
-  if (S.modal === "product") { const it = S.room.items.find(i => i.id === S.sel) || S.room.items[0]; if (!it) return ""; const p = PROD[it.p]; const alts = CATALOG.filter(x => x.b === p.b && x.id !== p.id).concat(CATALOG.filter(x => x.cat === p.cat && x.b !== p.b)).filter(x => !x.mine).slice(0, 3);
+  if (S.modal === "product") { const it = S.room.items.find(i => i.id === S.sel) || S.room.items[0]; if (!it) return ""; const p = PROD[it.p]; const alts = CATALOG.filter(x => x.b === p.b && x.id !== p.id).concat(CATALOG.filter(x => x.cat === p.cat && x.b !== p.b)).filter(x => !x.mine && !x.base && (!p.base || x.b === p.b)).slice(0, 3);
     b = `<div style="height:220px;border-radius:24px;background:#F4F3F0;overflow:hidden;margin-top:4px"><img src="${S.thumbs[p.id + ":" + (it.v || 0)] || S.thumbs[p.id]}" alt="${esc(p.n)}" style="width:100%;height:100%;object-fit:contain"></div>
-    <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2 class="h2 plain" style="margin:0">${p.n}</h2><div style="margin-top:6px;display:flex;gap:6px;align-items:center">${storeTag(p.store)}<span class="t13">${fmt(p.w)} × ${fmt(p.d)} м</span></div></div><div style="text-align:right"><div style="font-size:22px;line-height:28px;font-weight:700">${p.mine && !p.price ? "—" : rub(p.price)}</div><div class="t13" style="font-size:11px">${p.mine ? "твоя вещь" : "демо-цена"}</div></div></div>
+    <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2 class="h2 plain" style="margin:0">${p.n}</h2><div style="margin-top:6px;display:flex;gap:6px;align-items:center">${storeTag(p.store)}<span class="t13">${dimTxt(it, p)}</span></div></div>${p.base ? "" : `<div style="text-align:right"><div style="font-size:22px;line-height:28px;font-weight:700">${p.mine && !p.price ? "—" : rub(p.price)}</div><div class="t13" style="font-size:11px">${p.mine ? "твоя вещь" : "демо-цена"}</div></div>`}</div>
     <p class="cap" style="margin-top:20px">Цвет · ${colorName(it)}</p><div class="row">${p.vars.map((v, i) => `<button class="sw ${(it.v || 0) === i && !it.col && !isPh(it.mat) ? "on" : ""}" data-var="${i}" aria-label="${v[1]}"><i style="background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 45%),${v[0]}"></i><span>${v[1]}</span></button>`).join("")}</div>
-    ${it.col || isPh(it.mat) ? `<p class="t13" style="margin:8px 0 0">Свой цвет нужен для примерки. В магазине выбери ближайший вариант.</p>` : ""}<p class="cap">Похожие в других магазинах</p><div class="row">${alts.map(x => `<button class="pc lg" data-swap="${x.id}" style="flex:1;min-width:0"><span class="im" style="height:72px"><img src="${S.thumbs[x.id]}" alt=""></span><b style="font-size:13px;line-height:16px">${x.n}</b><span class="price" style="padding:0 4px;font-size:13px">${rub(x.price)}</span></button>`).join("")}</div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px">${p.mine ? "" : `<a class="cta" href="#" data-act="store">Открыть на ${ST[p.store]}${ic("next", 18, "#FFFFFF", 2.2)}</a>`}<button class="cta ${p.mine ? "" : "ghost"}" data-act="closem">Закрыть</button></div>`; }
+    ${it.col || isPh(it.mat) ? `<p class="t13" style="margin:8px 0 0">Свой цвет нужен для примерки. В магазине выбери ближайший вариант.</p>` : ""}${alts.length ? `<p class="cap">Похожие в магазинах</p>` : ""}<div class="row">${alts.map(x => `<button class="pc lg" data-swap="${x.id}" style="flex:1;min-width:0"><span class="im" style="height:72px"><img src="${S.thumbs[x.id]}" alt=""></span><b style="font-size:13px;line-height:16px">${x.n}</b><span class="price" style="padding:0 4px;font-size:13px">${rub(x.price)}</span></button>`).join("")}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px">${p.mine || p.base ? "" : `<a class="cta" href="#" data-act="store">Открыть на ${ST[p.store]}${ic("next", 18, "#FFFFFF", 2.2)}</a>`}<button class="cta ${p.mine || p.base ? "" : "ghost"}" data-act="closem">Закрыть</button></div>`; }
   if (S.modal === "paywall") b = `<div style="margin-top:8px;display:flex;align-items:center;gap:8px;color:var(--blue)">${ic("spark", 22)}<b style="font-size:15px">Pro</b></div><h2 style="margin:8px 0 0;font-size:28px;line-height:34px;font-weight:700">Сколько угодно вариантов</h2>
     <ul style="margin:16px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:15px;line-height:20px">${["Варианты одной комнаты и сравнение", "Все комнаты квартиры", "Прогулка и вечерний свет без ограничений", "Шеринг без водяного знака"].map(x => `<li style="display:flex;gap:10px">${ic("check", 20, "#0058B8", 2.4)}${x}</li>`).join("")}</ul>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px"><button class="lg-sel" data-plan="m" style="border-radius:20px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px"><span class="t13" style="color:inherit">Подписка</span><b style="font-size:22px;line-height:28px">150 ₽</b><span class="t13">в месяц</span></button><button class="lg" data-plan="o" style="border-radius:20px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px"><span class="t13">Одна квартира</span><b style="font-size:22px;line-height:28px">[цена]</b><span class="t13">навсегда</span></button></div>
@@ -1301,6 +1353,7 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
     case "onbnext": if (S.onb < ONB.length - 1) { S.onb++; render(); } else onbDone(); return;
     case "onbskip": onbDone(); return;
     case "onbshow": S.onb = 0; render(); return;
+    case "desel": S.sel = null; S.edit = false; render(); return;
     case "make": S.make = { img: null, ar: null, n: "", price: 0 }; S.edit = false; S.sel = null; render(); return;
     case "makeclose": S.make = null; render(); return;
     case "mkpick": if (S.make) { S.make.pick = true; render(); } return;
@@ -1355,11 +1408,12 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
   if (d.color) { if (S.paintWall === "all") { r.wallDefault = d.color; r.wallColors = {}; } else r.wallColors[S.paintWall] = d.color; rebuild(); render(); return; }
   if (d.floor) { r.floor = d.floor; rebuild(); render(); return; }
   if (d.lib) { S.lib = d.lib; render(); return; }
+  if (d.etab) { S.etab = d.etab; render(); return; }
   if (d.store) { S.store = d.store; render(); return; }
   if (d.coll !== undefined) { const c = COLLS[+d.coll]; for (const pid of c.items) { const it = place(pid); r.items.push(it); } rebuild(false); render(); toast("Добавили подборку «" + c.t + "» — расставь как нравится"); return; }
   if (d.add) { const it = place(d.add); if (it.noWin) { toast("Сначала поставь окно на шаге 2 — штора вешается на него"); return; } r.items.push(it); S.sel = it.id; rebuild(false); if (PROD[d.add].wall) focusWall(it.wallIdx); render(); return; }
   if (d.it) { const it = r.items.find(i => i.id === S.sel); if (!it) return; const p = PROD[it.p];
-    if (d.it === "color") { S.edit = !S.edit; render(); return; }
+    if (d.it === "color") { S.edit = !S.edit; if (S.edit) S.etab = null; render(); return; }
     if (d.it === "lock") { it.locked = !it.locked; toast(it.locked ? "Закреплено: не сдвинется случайно" : "Откреплено: можно двигать"); return; }
     if (d.it === "buy") { S.modal = "product"; render(); return; }
     if (d.it === "open") { it.open = !it.open; S.open = it.open ? it.id : null; S.openSill = null; S.slot = "0"; S.edit = false; rebuild(false); if (it.open) focusItem(r, it); else frame(r, { az: curAz() }); render(); if (it.open) toast("Полки открыты — выбери, что поставить"); return; }
@@ -1373,13 +1427,16 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
   if (d.ccol) { const it = r.items.find(i => i.id === S.sel); if (it) { it.col = d.ccol; if (isPh(it.mat)) it.mat = null; rebuild(false); } render(); return; }
   if (d.mat) { const it = r.items.find(i => i.id === S.sel); if (it) { it.mat = d.mat === "none" ? null : d.mat; rebuild(false); } render(); return; }
   if (d.wmode) { S.wallMode = d.wmode; S.wmenu = false; render(); return; }
-  if (d.swap) { const it = r.items.find(i => i.id === S.sel); if (it) { it.p = d.swap; it.v = 0; it.col = null; it.mat = null; if (PROD[d.swap].wall) snapWall(r, it); rebuild(false); } toast("Заменили на «" + PROD[d.swap].n + "»"); return; }
+  if (d.swap) { const it = r.items.find(i => i.id === S.sel); if (it) { it.p = d.swap; it.v = 0; it.col = null; it.mat = null; if (!PROD[d.swap].wall) { it.w = it.d = it.h = undefined; } if (PROD[d.swap].wall) snapWall(r, it); rebuild(false); } toast("Заменили на «" + PROD[d.swap].n + "»"); return; }
   if (d.mkar) { const a = ARC[d.mkar]; if (!a || !S.make) return; const keep = { img: S.make.img, n: S.make.n, price: S.make.price };
     S.make = { ...makeDefaults(d.mkar), ...keep, pick: false };
     if (S.make.mode === "cut" && S.make.img && !cutPhoto(S.make.img)) S.make.mode = primMode(a);
     render(); return; }
   if (d.mkmode) { if (S.make) { S.make.mode = d.mkmode; render(); } return; }
   if (d.mydel) { const p = PROD[d.mydel]; const n = p ? p.n : ""; dropMine(d.mydel); rebuild(false); toast(n ? "«" + n + "» удалили" : "Удалили"); return; }
+  if (d.rsz !== undefined) { const it = r.items.find(i => i.id === S.sel); if (!it) return; const p = PROD[it.p]; const z = p.sizes[+d.rsz]; if (!z) return; const o = { w: it.w, d: it.d, h: it.h };
+    it.w = z.w; it.d = z.d; if (z.h) it.h = z.h; if (isFloor(p) && !findNear(r, it)) { it.w = o.w; it.d = o.d; it.h = o.h; toast("Больше не помещается"); } else clampRiders(r, it);
+    rebuild(false); render(); return; }
   if (d.rpre !== undefined) { const it = r.items.find(i => i.id === S.sel); if (!it) return; const p = PROD[it.p]; const old = it.w;
     it.w = +d.rpre; if (isFloor(p) && !findNear(r, it)) { it.w = old; toast("Больше не помещается"); } else clampRiders(r, it);
     rebuild(false); render(); return; }
@@ -1408,8 +1465,8 @@ document.addEventListener("input", e => { const t = e.target;
     if (t.dataset.mkname !== undefined) { m.n = t.value.slice(0, 48); return; }
     if (t.dataset.mkprice !== undefined) { m.price = Math.max(0, Math.min(9999999, parseInt(t.value.replace(/\D/g, ""), 10) || 0)); return; } }
   if (t.dataset.opf) { const r = S.room, o = r && r.openings.find(x => x.id === S.selOpen); if (!o) return; setOp(r, o, t.dataset.opf, +t.value); syncOpUI(o); scheduleRoom(); return; }
-  if (t.dataset.rw !== undefined || t.dataset.rd !== undefined) { const r = S.room; const it = r.items.find(i => i.id === S.sel); if (!it) return;
-    const key = t.dataset.rw !== undefined ? "w" : "d"; const p = PROD[it.p]; const lim = key === "w" ? p.rsz : p.rszD; const old = it[key];
+  if (t.dataset.rw !== undefined || t.dataset.rd !== undefined || t.dataset.rh !== undefined) { const r = S.room; const it = r.items.find(i => i.id === S.sel); if (!it) return;
+    const key = t.dataset.rw !== undefined ? "w" : t.dataset.rd !== undefined ? "d" : "h"; const p = PROD[it.p]; const lim = key === "w" ? p.rsz : key === "d" ? p.rszD : p.hr; const old = it[key];
     it[key] = Math.round(+t.value * 20) / 20;
     if (isFloor(p) && !findNear(r, it)) { it[key] = old; t.value = old || p[key]; toast("Больше не помещается"); }
     t.style.setProperty("--p", pct(it[key] || p[key], lim[0], lim[1]) + "%");
