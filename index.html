@@ -186,6 +186,34 @@ input[type=range]:disabled{opacity:.4}
 .slot.on{background:var(--blue-l);color:var(--blue-d)}
 .slot.full{background:var(--fill2);box-shadow:inset 0 0 0 1px var(--line)}
 .slot img{width:100%;height:40px;object-fit:contain}
+/* ---------- онбординг ---------- */
+.onb{position:absolute;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;pointer-events:auto;padding:14px 20px 0}
+.onb-skip{align-self:flex-end;height:36px;padding:0 12px;border-radius:18px;font-size:14px;font-weight:500;color:var(--ink2);flex:none}
+.onb-art{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px;margin:4px 0 2px;background:var(--blue-l2);border-radius:28px}
+.onb-art svg{width:100%;max-width:330px;max-height:100%;height:auto}
+.onb-h{font-family:var(--head);font-weight:600;font-size:27px;line-height:31px;letter-spacing:.012em;text-transform:uppercase;margin:0}
+.onb-p{margin:10px 0 0;font-size:16px;line-height:22px;color:var(--ink2)}
+.onb-txt{flex:none;animation:onbUp .5s .1s both cubic-bezier(.2,.8,.2,1)}
+.onb-foot{flex:none;padding:22px 0 26px;display:flex;flex-direction:column;gap:18px}
+.onb-dots{display:flex;gap:6px;justify-content:center}
+.onb-dot{width:7px;height:7px;border-radius:4px;background:#C9CBD1;transition:width .3s cubic-bezier(.2,.8,.2,1),background .3s}
+.onb-dot.on{width:24px;background:var(--blue)}
+@keyframes onbUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes oDraw{to{stroke-dashoffset:0}}
+@keyframes oFade{to{opacity:1}}
+@keyframes oPop{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:none}}
+@keyframes oRise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes oGone{to{opacity:0}}
+@keyframes oMove{to{transform:translate(163px,-8px) scale(.88)}}
+.onb svg *{transform-box:fill-box;transform-origin:center}
+.o-draw{animation:oDraw 1.05s .15s both cubic-bezier(.4,0,.2,1)}
+.o-f{animation:oFade .45s both}
+.o-r{animation:oRise .5s both cubic-bezier(.2,.8,.2,1)}
+.o-p{animation:oPop .45s both cubic-bezier(.3,1.5,.5,1)}
+.o-bg{animation:oGone .5s 1.45s both}
+.o-ch{animation:oMove .75s 1.85s both cubic-bezier(.4,0,.2,1)}
+.d1{animation-delay:.9s}.d2{animation-delay:1.15s}.d3{animation-delay:1.4s}.d4{animation-delay:1.65s}.d5{animation-delay:1.95s}
+@media (prefers-reduced-motion:reduce){.onb *,.onb{animation-duration:.01ms!important;animation-delay:0ms!important}}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 /* внутри Telegram высоту задаёт клиент, а не 100dvh.
    На десктопе окно мини-приложения широкое: держим телефонную колонку по центру,

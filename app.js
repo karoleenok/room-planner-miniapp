@@ -796,7 +796,7 @@ function tick() {
 }
 
 /* ================= состояние UI ================= */
-const S = { make: null, full: false, open: null, openSill: null, slot: "0", plans: false, wallMode: "auto", wmenu: false, edit: false, screen: "home", rooms: [], room: null, sub: false, selWall: 0, selOpen: null, sel: null, paint: "walls", paintWall: "all", modal: null, toast: null, collapsed: false, lib: "Подборки", store: "all", q: "", draw: null, thumbs: {}, snaps: {} };
+const S = { onb: null, make: null, full: false, open: null, openSill: null, slot: "0", plans: false, wallMode: "auto", wmenu: false, edit: false, screen: "home", rooms: [], room: null, sub: false, selWall: 0, selOpen: null, sel: null, paint: "walls", paintWall: "all", modal: null, toast: null, collapsed: false, lib: "Подборки", store: "all", q: "", draw: null, thumbs: {}, snaps: {} };
 const STEPS = ["", "step1", "step2", "step3", "step4", "step5"];
 const stepNo = () => STEPS.indexOf(S.screen);
 
@@ -848,11 +848,72 @@ function setSide() { const n = NOTES[S.walk ? "walk" : S.screen]; if (n) { $("#s
   $("#jump").innerHTML = all.map(([k, l]) => `<button class="${(S.screen === k && !S.walk) || (k === "walk" && S.walk) || S.modal === k.slice(2) ? "on" : ""}" data-jump="${k}">${l}</button>`).join(""); }
 
 /* ---------- экраны ---------- */
+/* ---------- онбординг: четыре экрана, показываем один раз ---------- */
+const ONBKEY = "room.onb.v1";
+const ONB = [
+  { h: "Комната как у вас",
+    p: "Форма, метраж, окна и двери — не шаблон, а ваша квартира. Нарисуйте план пальцем или возьмите готовый.",
+    art: `<svg viewBox="0 0 320 230" aria-hidden="true">
+      <path class="o-f d1" d="M44 64H276V186H44Z" fill="#FFFFFF" opacity="0"/>
+      <path class="o-draw" d="M44 64H276V186H44Z" fill="none" stroke="#111114" stroke-width="3" stroke-linejoin="round" stroke-dasharray="708" stroke-dashoffset="708"/>
+      <rect class="o-p d2" x="152" y="56" width="86" height="16" rx="5" fill="#0B63E5" opacity="0"/>
+      <path class="o-f d3" d="M44 158V112" stroke="#0B63E5" stroke-width="7" stroke-linecap="round" opacity="0"/>
+      <path class="o-f d3" d="M44 112a46 46 0 0 1 46 46" fill="none" stroke="#0B63E5" stroke-width="2" stroke-dasharray="5 5" opacity="0"/>
+      <g class="o-f d4" opacity="0"><path d="M44 204H276" stroke="#8E9199" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="160" y="222" text-anchor="middle" font-size="14" font-weight="600" fill="#6B6E76">3,6 × 2,4 м</text></g>
+    </svg>` },
+  { h: "Мебель из магазинов",
+    p: "Каждая вещь — настоящий товар с реальными габаритами. Шкаф не влезает — вы увидите это сейчас, а не в день доставки.",
+    art: `<svg viewBox="0 0 320 230" aria-hidden="true">
+      <path d="M44 62H276V188H44Z" fill="#F1F2F4" stroke="#E2E4E8" stroke-width="2"/>
+      <rect class="o-r d1" x="60" y="96" width="92" height="64" rx="7" fill="#AFC0DA" opacity="0"/>
+      <rect class="o-r d2" x="166" y="80" width="44" height="80" rx="7" fill="#8E9AAE" opacity="0"/>
+      <rect class="o-r d3" x="224" y="118" width="38" height="42" rx="7" fill="#D8CFC2" opacity="0"/>
+      <g class="o-p d4" opacity="0"><rect x="172" y="176" width="118" height="30" rx="15" fill="#111114"/>
+        <text x="231" y="196" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">1,60 × 0,46 м</text></g>
+    </svg>` },
+  { h: "Своя вещь по фото",
+    p: "Снимите вещь или возьмите фото с карточки товара. Фон уберётся сам, предмет встанет в комнату.",
+    art: `<svg viewBox="0 0 320 230" aria-hidden="true">
+      <path class="o-f d1" d="M196 70H294V188H196Z" fill="#F1F2F4" stroke="#E2E4E8" stroke-width="2" opacity="0"/>
+      <rect x="26" y="58" width="112" height="134" rx="14" fill="#FFFFFF" stroke="#E2E4E8" stroke-width="2"/>
+      <rect class="o-bg" x="36" y="68" width="92" height="114" rx="8" fill="#EDEDEA"/>
+      <g class="o-ch"><path d="M64 152v-36a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v36" fill="#5B6676"/>
+        <rect x="58" y="140" width="48" height="13" rx="5" fill="#48525F"/>
+        <path d="M66 153v16M98 153v16" stroke="#48525F" stroke-width="5" stroke-linecap="round"/></g>
+      <g class="o-f d2" opacity="0"><path d="M152 126h24" stroke="#0B63E5" stroke-width="3" stroke-linecap="round"/>
+        <path d="M170 120l7 6-7 6" fill="none" stroke="#0B63E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>
+    </svg>` },
+  { h: "Список покупок",
+    p: "В конце — что купить, где и за сколько. Остаётся открыть ссылки и оформить заказ.",
+    art: `<svg viewBox="0 0 320 230" aria-hidden="true">
+      <rect x="34" y="40" width="252" height="150" rx="16" fill="#FFFFFF" stroke="#E2E4E8" stroke-width="2"/>
+      ${[["16 065 ₽", 96], ["9 079 ₽", 120], ["2 103 ₽", 74]].map(([pr, w], k) => `<g class="o-r d${k + 1}" opacity="0">
+        <rect x="50" y="${58 + k * 34}" width="26" height="26" rx="6" fill="#E7E9EE"/>
+        <rect x="86" y="${67 + k * 34}" width="${w}" height="8" rx="4" fill="#D6D9E0"/>
+        <text x="270" y="${76 + k * 34}" text-anchor="end" font-size="13" font-weight="600" fill="#111114">${pr}</text></g>`).join("")}
+      <path class="o-f d4" d="M50 166H270" stroke="#E2E4E8" stroke-width="1.5" opacity="0"/>
+      <g class="o-p d5" opacity="0"><text x="50" y="212" font-size="15" fill="#6B6E76">Итого</text>
+        <text x="270" y="212" text-anchor="end" font-size="21" font-weight="700" fill="#111114">27 247 ₽</text></g>
+    </svg>` }
+];
+function onbDone() { S.onb = null; try { localStorage.setItem(ONBKEY, "1"); } catch (_) {} render(); }
+function vOnb() {
+  const i = Math.max(0, Math.min(ONB.length - 1, S.onb)), s = ONB[i], last = i === ONB.length - 1;
+  return `<div class="onb" role="dialog" aria-modal="true" aria-label="Знакомство с приложением">
+    <button class="onb-skip" data-act="onbskip" style="visibility:${last ? "hidden" : "visible"}">Пропустить</button>
+    <div class="onb-art">${s.art}</div>
+    <div class="onb-txt"><h1 class="onb-h">${s.h}</h1><p class="onb-p">${s.p}</p></div>
+    <div class="onb-foot"><div class="onb-dots" role="presentation">${ONB.map((_, k) => `<i class="onb-dot ${k === i ? "on" : ""}"></i>`).join("")}</div>
+      <button class="cta" data-act="onbnext">${last ? "Поехали" : "Дальше"}${ic(last ? "check" : "next", 18, "#FFFFFF", 2.2)}</button></div></div>`;
+}
+
 function vHome() {
   let r = `<div class="home"><div style="display:flex;align-items:center;justify-content:space-between;min-height:44px"><h1 style="margin:0;font-size:34px;line-height:41px;font-weight:700;letter-spacing:-.01em">Мои комнаты</h1><button class="${S.sub ? "lg-sel" : "lg"} chip" data-act="paywall" style="font-size:14px;font-weight:600">${ic("spark", 16)}Pro</button></div>`;
   if (!S.rooms.length) r += `<div class="roomcard" style="margin-top:16px"><img src="${S.snaps.p0 || ""}" alt="" style="height:200px"><div style="padding:16px 20px 20px"><div class="t15" style="font-size:20px;line-height:26px">Обустроим комнату за 5 шагов</div><div class="t13" style="font-size:15px;line-height:20px;margin-top:4px">Стены, окна, отделка, мебель — и список, где всё купить</div></div></div>`;
   else r += `<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">` + S.rooms.map(x => `<button class="roomcard" data-open-room="${x.id}"><img src="${x.snap || ""}" alt="" style="height:180px"><div style="padding:12px 16px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px"><div><div class="t15">${esc(x.name)}</div><div class="t13">${fmt(area(x))} м² · ${x.items.length} предм.</div></div><span class="ad" style="${x.step <= 5 ? "background:#EAF2FD;color:#0058B8" : ""}">${x.step > 5 ? "Готово" : "Шаг " + x.step + " из 5"}</span></div></button>`).join("") + `</div>`;
   r += `<p class="cap" style="margin-top:32px">Начать с готового</p><div class="scrollx">` + PRESETS.map((p, i) => `<button class="coll" data-preset="${i}"><img src="${S.snaps["p" + i] || ""}" alt=""><div style="padding:10px 14px 14px;display:flex;flex-direction:column;gap:4px"><div class="t15">${p.t}</div><div class="t13">${p.by}</div>${p.ad ? `<span class="ad" style="align-self:flex-start">Реклама · ${p.ad}</span>` : ""}</div></button>`).join("") + `</div></div>`;
+  r += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="link" data-act="onbshow">Как это работает</button></div>`;
   r += `<div class="bottom"><button class="cta" data-act="new">${ic("plus", 18, "#FFFFFF", 2.2)}Обустроить комнату</button></div>`; return r; }
 
 function vStep1() { const r = S.room;
@@ -1054,7 +1115,7 @@ function render() {
   if (S.walk) v = vWalk(); else v = { home: vHome, step1: vStep1, step2: vStep2, step3: vStep3, step4: vStep4, step5: vStep5, guest: vGuest }[S.screen]();
   if (S.screen === "home") setOffset(0);
   const ae = document.activeElement; const fq = ae && ae.dataset && ae.dataset.q !== undefined; const pos = fq ? ae.selectionStart : 0;
-  $("#ui").innerHTML = v + vModal() + (S.toast ? `<div class="toast" role="status">${esc(S.toast)}</div>` : "");
+  $("#ui").innerHTML = v + vModal() + (S.onb !== null && S.onb !== undefined ? vOnb() : "") + (S.toast ? `<div class="toast" role="status">${esc(S.toast)}</div>` : "");
   $("#phone").classList.toggle("night", !!(S.room && S.room.night));
   if (fq) { const q = document.querySelector("[data-q]"); if (q) { q.focus(); q.setSelectionRange(pos, pos); } }
   setSide(); bindDraw(); bindJoy(); updateSel(); highlightWall();
@@ -1184,6 +1245,9 @@ document.addEventListener("click", e => { const el = e.target.closest("button,a,
     case "z+": zoomBy(.78); return;
     case "z-": zoomBy(1.28); return;
     case "plans": S.plans = !S.plans; render(); return;
+    case "onbnext": if (S.onb < ONB.length - 1) { S.onb++; render(); } else onbDone(); return;
+    case "onbskip": onbDone(); return;
+    case "onbshow": S.onb = 0; render(); return;
     case "make": S.make = { img: null, ar: null, n: "", price: 0 }; S.edit = false; S.sel = null; render(); return;
     case "makeclose": S.make = null; render(); return;
     case "mkpick": if (S.make) { S.make.pick = true; render(); } return;
@@ -1342,7 +1406,9 @@ async function presetSnaps() { for (let i = 0; i < PRESETS.length; i++) { const 
 
 /* ---------- старт ---------- */
 (async () => {
-  resize(); await makeThumbs(); await loadMine(); await presetSnaps(); $("#loading").remove(); tick();
+  resize(); await makeThumbs(); await loadMine(); await presetSnaps(); $("#loading").remove();
+  try { if (localStorage.getItem(ONBKEY) !== "1") S.onb = 0; } catch (_) {}
+  render(); tick();
   const h = location.hash.slice(1); if (h) jump(h); else render();
   window.APP = { THREE, frame, edges, builtItems, moveFloor, okFloor, adaptAll, buildItems, rebuild, PROD, S, jump, go, render, walk, camera, controls, cutPhoto, MY, ARC, addMine };
 })();
