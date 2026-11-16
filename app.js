@@ -537,7 +537,18 @@ function skinWrap(inner, p, it, room) {
 }
 
 /* ---------- своя библиотека ---------- */
-const MY = []; const MYKEY = "room.my.v1"; const MYMAX = 40;
+const MY = []; const MYKEY = "room.my.v1"; const MYMAX = 120;
+/* память: IndexedDB (сотни МБ вместо 5 МБ у localStorage), localStorage остаётся запасным путём и источником для переезда */
+const KV = (() => { let db = null;
+  const open = () => db || (db = new Promise((res, rej) => { try { const q = indexedDB.open("room-kv", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); } catch (e) { rej(e); } }));
+  const run = (mode, f) => open().then(d => new Promise((res, rej) => { const t = d.transaction("kv", mode), st = t.objectStore("kv"); let out; const r = f(st); if (r) r.onsuccess = () => { out = r.result; }; t.oncomplete = () => res(out); t.onerror = t.onabort = () => rej(t.error); }));
+  return { get: k => run("readonly", st => st.get(k)), set: (k, v) => run("readwrite", st => st.put(v, k)), del: k => run("readwrite", st => st.delete(k)) };
+})();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (_) {}
+async function kvLoad(key) { try { const v = await KV.get(key); if (Array.isArray(v)) return v; } catch (_) {}
+  try { const a = JSON.parse(localStorage.getItem(key) || "[]"); if (!Array.isArray(a)) return [];
+    if (a.length) { try { await KV.set(key, a); localStorage.removeItem(key); } catch (_) {} } /* переезд из старой памяти, старую копию убираем, чтобы удалённое не воскресало */
+    return a; } catch (_) { return []; } }
 function myProd(o) {
   const a = ARC[o.ar], ph = PHOTOS[o.img];
   const p = { id: o.id, n: o.n || a.n, cat: a.cat, b: a.b, store: "my", price: o.price || 0, w: o.w, d: o.d,
@@ -564,8 +575,7 @@ function dropMine(id) {
   saveMine();
 }
 function saveMine() {
-  try { localStorage.setItem(MYKEY, JSON.stringify(MY.map(o => ({ ...o, u: (PHOTOS[o.img] || {}).url })))); }
-  catch (_) { toast("Не хватило места в памяти браузера. Удали что-нибудь из своих вещей"); }
+  KV.set(MYKEY, MY.map(o => ({ ...o, u: (PHOTOS[o.img] || {}).url }))).catch(() => toast("Не хватило места в памяти. Удали что-нибудь из своих вещей"));
 }
 const ROOMKEY = "room.rooms.v1"; let saveT = 0;
 function roomPack(withSnap) {
@@ -578,18 +588,15 @@ function roomPack(withSnap) {
     const o = { ...r, items, ph }; if (!withSnap) o.snap = null; delete o.sel; return o; });
 }
 function saveRooms() {
-  try { if (!S.rooms.length) { localStorage.removeItem(ROOMKEY); return; }
-    try { localStorage.setItem(ROOMKEY, JSON.stringify(roomPack(true))); }
-    catch (_) { localStorage.setItem(ROOMKEY, JSON.stringify(roomPack(false))); } }
-  catch (_) { toast("Не хватило места в памяти браузера, комнаты не сохранились"); }
+  if (!S.rooms.length) { KV.del(ROOMKEY).catch(() => {}); return; }
+  KV.set(ROOMKEY, roomPack(true)).catch(() => toast("Не хватило места в памяти, комнаты не сохранились"));
 }
 function queueSave() { clearTimeout(saveT); saveT = setTimeout(saveRooms, 500); }
 function flushSave() { if (saveT) { try { if (S.room && S.screen !== "home" && !S.walk) snap(); } catch (_) {} clearTimeout(saveT); saveT = 0; saveRooms(); } }
 addEventListener("pagehide", flushSave); document.addEventListener("visibilitychange", () => { if (document.hidden) flushSave(); });
 async function loadRooms() {
-  let arr; try { arr = JSON.parse(localStorage.getItem(ROOMKEY) || "[]"); } catch (_) { return; }
-  if (!Array.isArray(arr)) return;
-  for (const o of arr.slice(0, 30)) {
+  const arr = await kvLoad(ROOMKEY);
+  for (const o of arr.slice(0, 60)) {
     if (!o || !Array.isArray(o.pts) || o.pts.length < 3 || !Array.isArray(o.items) || !Array.isArray(o.openings)) continue;
     const map = {}; const ph = o.ph && typeof o.ph === "object" ? o.ph : {};
     for (const k of Object.keys(ph)) { if (typeof ph[k] === "string" && ph[k].startsWith("data:image/")) { const id = await restorePhoto(ph[k]); if (id) map[k] = id; } }
@@ -608,8 +615,7 @@ function restorePhoto(url) {
     im.onerror = () => res(null); im.src = url; });
 }
 async function loadMine() {
-  let arr; try { arr = JSON.parse(localStorage.getItem(MYKEY) || "[]"); } catch (_) { return; }
-  if (!Array.isArray(arr)) return;
+  const arr = await kvLoad(MYKEY);
   for (const o of arr.slice(0, MYMAX).reverse()) {
     if (!o || !ARC[o.ar] || !o.u || typeof o.u !== "string" || !o.u.startsWith("data:image/")) continue;
     const img = await restorePhoto(o.u); if (!img) continue;
